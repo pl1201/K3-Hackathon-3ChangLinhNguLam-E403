@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css?v=essay-answer-8">
 </head>
 <body>
   <a class="skip-link" href="#workspace">Đi đến nội dung chính</a>
@@ -241,6 +241,9 @@
             <button id="agent-quiz-btn" class="agent-action-btn agent-action-btn--quiz" type="button">
               <span>❓</span> Tạo Quiz
             </button>
+            <button id="agent-essay-btn" class="agent-action-btn agent-action-btn--essay" type="button">
+              <span>✎</span> Tạo Tự luận
+            </button>
           </div>
         </div>
 
@@ -275,19 +278,31 @@
         <!-- Summary state -->
         <div class="agent-summary hidden" id="agent-summary">
           <div class="summary-header">
-            <span class="summary-tag">TÓM TẮT BÀI HỌC</span>
-            <button class="summary-refresh" id="summary-refresh" type="button" title="Tóm tắt lại">↻</button>
+            <button class="mode-home-btn" id="summary-back-home" type="button">← Trang chính</button>
+            <div class="summary-header-actions">
+              <span class="summary-tag">TÓM TẮT BÀI HỌC</span>
+              <button class="summary-refresh" id="summary-refresh" type="button" title="Tóm tắt lại">↻</button>
+            </div>
           </div>
-          <div class="summary-body" id="summary-body">
-            <!-- filled by JS -->
+          <div class="summary-body hidden" id="summary-body">
+            <div class="summary-empty-state">
+              Chọn một nội dung hoặc nhắn phần bạn muốn ôn nhanh.
+            </div>
           </div>
-          <button class="agent-action-btn start-quiz-btn" id="agent-quiz-start" type="button">
-            <span>✓</span> Bắt đầu Quiz ngay
-          </button>
+          <div class="summary-inline-chat">
+            <div class="summary-inline-messages" id="summary-inline-messages"></div>
+          </div>
+          <div class="summary-inline-input-wrap summary-bottom-composer">
+            <input id="summary-inline-input" type="text"
+              placeholder="VD: Tóm tắt phần Attention hoặc slide 10–15"
+              maxlength="300" autocomplete="off">
+            <button id="summary-inline-send" type="button" aria-label="Gửi yêu cầu tóm tắt">➤</button>
+          </div>
         </div>
 
         <!-- Topic Selection -->
         <div class="agent-topic-select hidden" id="agent-topic-select">
+          <button class="mode-home-btn" id="topic-back-home" type="button">← Trang chính</button>
           <div class="topic-select-header">
             <span class="topic-select-tag">🎯 CHỌN CHỦ ĐỀ ÔN TẬP</span>
             <p class="topic-select-desc">Bạn muốn quiz về phần kiến thức nào? Chọn một chủ đề hoặc để Agent tự quyết định.</p>
@@ -309,6 +324,16 @@
               <button class="bloom-chip" data-level="evaluate" type="button">Vận dụng cao</button>
             </div>
           </div>
+          <div class="quiz-count-wrap">
+            <label class="quiz-count-label">Số lượng câu hỏi:</label>
+            <div class="quiz-count-chips" role="radiogroup" aria-label="Số lượng câu hỏi Quiz">
+              <button class="quiz-count-chip" data-count="5" type="button" role="radio" aria-checked="false">5 câu</button>
+              <button class="quiz-count-chip" data-count="10" type="button" role="radio" aria-checked="false">10 câu</button>
+              <button class="quiz-count-chip" data-count="15" type="button" role="radio" aria-checked="false">15 câu</button>
+              <button class="quiz-count-chip active" data-count="20" type="button" role="radio" aria-checked="true">20 câu</button>
+              <button class="quiz-count-chip" data-count="25" type="button" role="radio" aria-checked="false">25 câu</button>
+            </div>
+          </div>
           <button class="agent-action-btn" id="topic-confirm-btn" type="button">
             <span>▶</span> Tạo bộ Quiz 20 câu
           </button>
@@ -316,6 +341,7 @@
 
         <!-- Quiz flow -->
         <div class="agent-quiz-flow hidden" id="agent-quiz-flow">
+          <button class="mode-home-btn qf-home-btn" id="qf-back-summary" type="button">← Trang chính</button>
           <!-- Question card -->
           <div class="quiz-flow-header">
             <span class="quiz-flow-label" id="qf-label">CÂU 1 / 5</span>
@@ -339,6 +365,7 @@
             <div class="qf-result-mark" id="qf-result-mark"></div>
             <p class="qf-result-title" id="qf-result-title"></p>
             <div class="qf-explanation" id="qf-explanation"></div>
+            <button class="source-jump-btn hidden" id="qf-source-jump" type="button">↗ Mở Slide nguồn</button>
             <div class="qf-misconception hidden" id="qf-misconception">
               <span>Điểm cần làm rõ</span>
               <p id="qf-misconception-text"></p>
@@ -348,6 +375,39 @@
               <button class="qf-reinforce-btn hidden" id="qf-reinforce" type="button">Củng cố →</button>
               <button class="qf-restart-btn" id="qf-restart" type="button">Làm lại</button>
             </div>
+          </div>
+        </div>
+
+        <!-- Short essay flow -->
+        <div class="agent-essay hidden" id="agent-essay">
+          <div class="essay-header">
+            <button class="qf-back-summary" id="essay-back-summary" type="button">← Trang chính</button>
+            <span class="essay-tag">TỰ LUẬN NGẮN</span>
+          </div>
+          <div class="essay-question-card">
+            <p id="essay-question-text">Đang tạo câu hỏi…</p>
+            <div id="essay-question-source"></div>
+          </div>
+          <label class="essay-answer-label" for="essay-answer-input">Câu trả lời của bạn</label>
+          <textarea id="essay-answer-input" rows="6" maxlength="5000"
+            placeholder="Trình bày ngắn gọn trong 3–6 câu…"></textarea>
+          <button class="agent-submit-btn" id="essay-submit" type="button">Nộp bài tự luận →</button>
+          <div class="essay-result hidden" id="essay-result">
+            <div class="essay-score" id="essay-score"></div>
+            <p id="essay-feedback"></p>
+            <div class="essay-model-answer">
+              <strong>Đáp án tham khảo ngắn</strong>
+              <p id="essay-suggested-answer"></p>
+            </div>
+            <div class="essay-rubric">
+              <strong>Cách tính điểm</strong>
+              <div id="essay-rubric-breakdown"></div>
+            </div>
+            <div class="essay-result-grid">
+              <div><strong>Đã làm tốt</strong><ul id="essay-strengths"></ul></div>
+              <div><strong>Cần bổ sung</strong><ul id="essay-missing"></ul></div>
+            </div>
+            <div id="essay-result-source"></div>
           </div>
         </div>
 
@@ -391,6 +451,6 @@
   <input id="lesson-id" type="hidden" value="transcript-06-clean">
 
   <div id="toast" class="toast" role="status"></div>
-  <script src="/app.js" defer></script>
+  <script src="/app.js?v=essay-answer-8" defer></script>
 </body>
 </html>

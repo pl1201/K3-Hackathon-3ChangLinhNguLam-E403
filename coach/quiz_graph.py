@@ -5,12 +5,14 @@ from __future__ import annotations
 import json
 import logging
 import re
+import secrets
 from typing import Literal, TypedDict
 
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from coach.compression import compressed_retrieve
+from coach.content_sources import load_lesson_context
 from coach.schemas_quiz import QuizModel
 from coach.tools import ErrorAnalysisTool, QuizEvaluatorTool, QuizGeneratorTool, SemanticSearchTool
 
@@ -51,13 +53,25 @@ def _validated_quiz(state: QuizState) -> QuizModel:
     return QuizModel.model_validate(extract_json(state["quiz_json"]))
 
 
+def shuffle_quiz_options(quiz: QuizModel) -> QuizModel:
+    """Shuffle options once while preserving each option's correctness flag."""
+    rng = secrets.SystemRandom()
+    for question in quiz.questions:
+        rng.shuffle(question.options)
+    return quiz
+
+
 def retrieve_context(state: QuizState) -> QuizState:
     if state.get("context_text"):
         return {}
     
     lesson_id = state.get("lesson_id", "transcript-06-clean")
     query = state.get("topic_query", "Kiến thức tổng hợp")
-    
+
+    if lesson_id in ("day1", "day2"):
+        context = load_lesson_context(lesson_id, query, max_chars=16_000)
+        return {"context_text": context, "phase": "generating"}
+
     try:
         context_docs = compressed_retrieve(
             lesson_id=lesson_id,
@@ -79,12 +93,14 @@ def retrieve_context(state: QuizState) -> QuizState:
 def generate_quiz(state: QuizState) -> QuizState:
     attempts = state.get("generation_attempts", 0) + 1
     num_q = state.get("num_questions", 20)
-    quiz_json = quiz_tool._run(
+    raw_quiz = quiz_tool._run(
         context_text=state["context_text"],
         num_questions=num_q,
         bloom_level=state.get("bloom_level", "analyze"),
         use_yake=True,
     )
+    quiz = QuizModel.model_validate(extract_json(raw_quiz))
+    quiz_json = shuffle_quiz_options(quiz).model_dump_json()
     return {
         "quiz_json": quiz_json,
         "generation_attempts": attempts,

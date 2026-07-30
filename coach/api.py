@@ -18,12 +18,19 @@ from coach.schemas import (
     StartSessionRequest,
 )
 from coach.schemas_quiz import (
+    EssayAnswerRequest,
+    EssayResultResponse,
+    EssaySessionResponse,
+    EssayStartRequest,
     PublicQuizOption,
     PublicQuizQuestion,
+    PublicEssayQuestion,
     QuizAnswerRequest,
     QuizModel,
     QuizSessionResponse,
     QuizStartRequest,
+    SummaryRequest,
+    SummaryResponse,
 )
 
 
@@ -31,6 +38,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CODEBASE = ROOT / "codebase"
 SESSIONS: dict[str, CoachState] = {}
 QUIZ_SESSIONS: dict[str, QuizState] = {}
+ESSAY_SESSIONS: dict[str, dict] = {}
 
 app = FastAPI(title="Active Recall Coach API", version="0.1.0")
 app.add_middleware(
@@ -213,6 +221,97 @@ def _error_analysis_from_state(state: QuizState) -> dict | None:
         return {"detail": raw}
 
 
+def _short_explanation(text: str, max_chars: int = 260) -> str:
+    """Keep learner-facing feedback concise even if a provider is verbose."""
+    compact = " ".join(text.split())
+    if len(compact) <= max_chars:
+        return compact
+    return compact[: max_chars - 1].rsplit(" ", 1)[0] + "…"
+
+
+def _short_reference_answer(text: str, max_chars: int = 450) -> str:
+    """Return a compact model answer suitable for quick learner review."""
+    compact = " ".join(text.split())
+    if len(compact) <= max_chars:
+        return compact
+
+    shortened = compact[: max_chars + 1]
+    sentence_end = max(
+        shortened.rfind("."),
+        shortened.rfind("?"),
+        shortened.rfind("!"),
+    )
+    if sentence_end >= 100:
+        return shortened[: sentence_end + 1]
+    return shortened[:max_chars].rsplit(" ", 1)[0] + "…"
+
+
+@app.post("/api/essay/sessions", response_model=EssaySessionResponse)
+async def start_essay_session(payload: EssayStartRequest) -> EssaySessionResponse:
+    if not get_settings().llm_enabled:
+        raise HTTPException(status_code=503, detail="A configured LLM provider is required")
+
+    from coach.content_sources import load_lesson_context
+    from coach.essay import generate_essay_question
+
+    try:
+        context = await run_in_threadpool(
+            lambda: load_lesson_context(
+                payload.lesson_id,
+                payload.topic_query,
+                max_chars=16_000,
+                chunk_limit=8,
+            )
+        )
+        question = await run_in_threadpool(
+            lambda: generate_essay_question(context, payload.topic_query, payload.bloom_level)
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Essay generation failed: {exc}") from exc
+
+    session_id = uuid4().hex
+    ESSAY_SESSIONS[session_id] = {"question": question, "context": context}
+    return EssaySessionResponse(
+        session_id=session_id,
+        question=PublicEssayQuestion(
+            question_text=question.question_text,
+            source_file=question.source_file,
+            page_number=question.page_number,
+            chunk_id=question.chunk_id,
+        ),
+    )
+
+
+@app.post("/api/essay/answers", response_model=EssayResultResponse)
+async def submit_essay_answer(payload: EssayAnswerRequest) -> EssayResultResponse:
+    session = ESSAY_SESSIONS.get(payload.session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Essay session not found")
+
+    from coach.essay import evaluate_essay_answer
+
+    try:
+        evaluation = await run_in_threadpool(
+            lambda: evaluate_essay_answer(
+                session["question"],
+                payload.answer_text,
+                session["context"],
+            )
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Essay evaluation failed: {exc}") from exc
+
+    question = session["question"]
+    return EssayResultResponse(
+        session_id=payload.session_id,
+        evaluation=evaluation,
+        suggested_answer=_short_reference_answer(question.reference_answer),
+        source_file=question.source_file,
+        page_number=question.page_number,
+        chunk_id=question.chunk_id,
+    )
+
+
 @app.post("/api/quiz/sessions", response_model=QuizSessionResponse)
 async def start_quiz_session(payload: QuizStartRequest) -> QuizSessionResponse:
     if not get_settings().llm_enabled:
@@ -290,8 +389,10 @@ async def submit_quiz_answer(payload: QuizAnswerRequest) -> QuizSessionResponse:
             else None
         ),
         is_correct=is_correct,
-        explanation=previous_quiz.questions[q_idx].explanation,
+        explanation=_short_explanation(previous_quiz.questions[q_idx].explanation),
         error_analysis=_error_analysis_from_state(result),
+        review_source_file=previous_quiz.questions[q_idx].source_file,
+        review_page_number=previous_quiz.questions[q_idx].page_number,
         generation_attempts=result.get("generation_attempts", 0),
         current_question_idx=next_idx,
         total_questions=total_q,
@@ -306,6 +407,19 @@ from pydantic import BaseModel as PydanticBaseModel
 from typing import Optional
 from fastapi.responses import StreamingResponse
 
+
+@app.post("/api/structured-summary", response_model=SummaryResponse)
+async def structured_summary(payload: SummaryRequest) -> SummaryResponse:
+    """Return evidence-linked micro-facts for a fast lesson review."""
+    from coach.content_sources import resolve_lesson_id
+    from coach.structured_summarizer import summarize_lesson as build_summary
+
+    effective_lesson_id = resolve_lesson_id(payload.lesson_id, payload.query)
+    summary = await run_in_threadpool(
+        lambda: build_summary(effective_lesson_id, payload.query)
+    )
+    return SummaryResponse(lesson_id=effective_lesson_id, summary=summary)
+
 class SummarizeRequest(PydanticBaseModel):
     lesson_id: str
     user_query: Optional[str] = None
@@ -317,40 +431,22 @@ async def summarize_lesson(payload: SummarizeRequest):
     if not settings.llm_enabled:
         raise HTTPException(status_code=503, detail="LLM not configured")
 
-    from coach.compression import compressed_retrieve
+    from coach.content_sources import load_lesson_context
     from coach.llm_client import create_openai_compatible_client
 
     query = payload.user_query or "Tóm tắt toàn bộ nội dung chính của bài học này"
-    
-    if payload.lesson_id in ("day1", "day2"):
-        filename = "d1-slide-hackathon.pdf" if payload.lesson_id == "day1" else "d2-slide-hackathon.pdf"
-        pdf_path = SLIDES_DIR / filename
-        try:
-            def extract_pdf_text(path):
-                import pypdf
-                with open(path, "rb") as f:
-                    reader = pypdf.PdfReader(f)
-                    return "\n\n".join(page.extract_text() for page in reader.pages)
-            
-            context = await run_in_threadpool(lambda: extract_pdf_text(pdf_path))
-            if len(context) > 30000:
-                context = context[:30000]
-        except Exception as exc:
-            context = ""
-            print(f"Error parsing PDF: {exc}")
-    else:
-        try:
-            context_docs = await run_in_threadpool(
-                lambda: compressed_retrieve(
-                    lesson_id=payload.lesson_id,
-                    query=query,
-                    mode="embeddings",
-                    similarity_threshold=0.3
-                )
+
+    try:
+        context = await run_in_threadpool(
+            lambda: load_lesson_context(
+                payload.lesson_id,
+                query,
+                max_chars=24_000 if payload.lesson_id in ("day1", "day2") else 9_000,
+                chunk_limit=12,
             )
-            context = "\n".join([doc.page_content for doc in context_docs])
-        except Exception:
-            context = ""
+        )
+    except Exception:
+        context = ""
 
     if not context or context.startswith("[Lỗi]"):
         async def error_gen():
@@ -363,7 +459,10 @@ async def summarize_lesson(payload: SummarizeRequest):
         "Bạn là một Trợ giảng AI thông minh. "
         "Nhiệm vụ của bạn là tóm tắt nội dung bài giảng một cách ngắn gọn, rõ ràng, dễ hiểu. "
         "Trả lời bằng tiếng Việt, dùng markdown formatting (bold, bullets). "
-        "Chỉ dựa trên nội dung được cung cấp, không bịa thêm thông tin."
+        "Chỉ dựa trên nội dung được cung cấp, không bịa thêm thông tin. "
+        "Mỗi ý kiến thức phải kết thúc bằng citation đúng từ metadata nguồn: "
+        "dùng `[Trang X]` cho PDF và `[Txx-xxx]` cho transcript. "
+        "Không tự tạo citation và không bỏ citation ở các ý chính."
     )
 
     user_msg = f"Dựa trên nội dung bài giảng sau:\n\n{context}\n\n"

@@ -12,11 +12,29 @@ class MicroFact(BaseModel):
     """Một thông tin hoặc định nghĩa cụ thể, ngắn gọn, có tính đúng/sai rõ ràng."""
     fact: str = Field(
         description="Nội dung sự thật (ví dụ: 'Transformer được Google giới thiệu năm 2017').",
-        max_length=150,
+        max_length=180,
     )
     is_core_concept: bool = Field(
         description="Đánh dấu True nếu đây là khái niệm lõi bắt buộc phải nhớ, False nếu là thông tin phụ trợ.",
     )
+    chunk_id: Optional[str] = Field(
+        default=None,
+        description="Mã đoạn văn bản trích dẫn trong transcript (vd: 'T06-051').",
+    )
+    page_number: Optional[int] = Field(
+        default=None,
+        description="Số trang slide hoặc vị trí trang tài liệu (nếu có).",
+    )
+    source_file: Optional[str] = Field(
+        default=None,
+        description="Tên file nguồn để mở lại đúng tài liệu.",
+    )
+
+    @model_validator(mode="after")
+    def transcript_fact_does_not_invent_page(self) -> Self:
+        if self.chunk_id and not self.source_file:
+            self.page_number = None
+        return self
 
 class Topic(BaseModel):
     """Một chủ đề lớn trong bài giảng, chứa nhiều sự thật vi mô (micro-facts)."""
@@ -40,6 +58,16 @@ class StructuredSummary(BaseModel):
     )
 
 
+class SummaryRequest(BaseModel):
+    lesson_id: str = Field(default="transcript-06-clean", pattern=r"^[a-zA-Z0-9_-]+$")
+    query: str | None = Field(default=None, min_length=3, max_length=300)
+
+
+class SummaryResponse(BaseModel):
+    lesson_id: str
+    summary: StructuredSummary
+
+
 # ---------------------------------------------------------------------------
 # Quiz Generation Schemas
 # ---------------------------------------------------------------------------
@@ -60,7 +88,8 @@ class QuizQuestion(BaseModel):
         max_length=4,
     )
     explanation: str = Field(
-        description="Giải thích chi tiết tại sao đáp án đúng lại đúng, và tại sao các đáp án sai lại sai.",
+        description="Giải thích ngắn gọn 1-2 câu: nêu đáp án đúng và ý cốt lõi.",
+        max_length=320,
     )
     source_file: Optional[str] = Field(
         default=None,
@@ -122,6 +151,95 @@ class QuizSessionResponse(BaseModel):
     is_correct: bool | None = None
     explanation: str | None = None
     error_analysis: dict | None = None
+    review_source_file: str | None = None
+    review_page_number: int | None = None
     generation_attempts: int = Field(default=0, ge=0, le=3)
     current_question_idx: int = Field(default=0, ge=0, description="Index câu hiện tại (0-based).")
     total_questions: int = Field(default=20, ge=1, le=25, description="Tổng số câu trong bộ quiz.")
+
+
+# ---------------------------------------------------------------------------
+# Short Essay Schemas
+# ---------------------------------------------------------------------------
+
+class EssayQuestion(BaseModel):
+    question_text: str = Field(min_length=10, max_length=500)
+    reference_answer: str = Field(min_length=20, max_length=1200)
+    rubric_points: list[str] = Field(min_length=2, max_length=5)
+    source_file: str | None = None
+    page_number: int | None = Field(default=None, ge=1)
+    chunk_id: str | None = Field(default=None, pattern=r"^T\d{2}-\d{3}$")
+
+    @model_validator(mode="after")
+    def transcript_question_does_not_invent_page(self) -> Self:
+        if self.chunk_id and not self.source_file:
+            self.page_number = None
+        return self
+
+
+class EssayStartRequest(BaseModel):
+    topic_query: str = Field(default="Nội dung bài học này", min_length=3, max_length=300)
+    lesson_id: str = Field(default="transcript-06-clean", pattern=r"^[a-zA-Z0-9_-]+$")
+    bloom_level: Literal["understand", "apply", "analyze", "evaluate"] = "analyze"
+
+
+class EssayAnswerRequest(BaseModel):
+    session_id: str = Field(min_length=8, max_length=64)
+    answer_text: str = Field(min_length=10, max_length=5000)
+
+
+class EssayCriterionAssessment(BaseModel):
+    criterion: str = Field(max_length=180)
+    status: Literal["met", "partial", "missing"]
+    reason: str = Field(max_length=220)
+    evidence_quote: str | None = Field(
+        default=None,
+        max_length=300,
+        description="Trích dẫn nguyên văn ngắn từ câu trả lời học viên; bắt buộc khi met/partial.",
+    )
+
+
+class EssayLLMAssessment(BaseModel):
+    criteria: list[EssayCriterionAssessment] = Field(min_length=1, max_length=5)
+    feedback: str = Field(max_length=320)
+
+
+class EssayRubricScore(BaseModel):
+    criterion: str
+    status: Literal["met", "partial", "missing"]
+    points: float = Field(ge=0)
+    max_points: float = Field(gt=0)
+    reason: str
+
+
+class EssayEvaluation(BaseModel):
+    score: float = Field(ge=0, le=10)
+    verdict: Literal["strong", "partial", "needs_review"]
+    feedback: str = Field(max_length=320)
+    strengths: list[str] = Field(default_factory=list, max_length=3)
+    missing_points: list[str] = Field(default_factory=list, max_length=3)
+    rubric_breakdown: list[EssayRubricScore] = Field(default_factory=list, max_length=5)
+
+
+class PublicEssayQuestion(BaseModel):
+    question_text: str
+    source_file: str | None = None
+    page_number: int | None = None
+    chunk_id: str | None = None
+
+
+class EssaySessionResponse(BaseModel):
+    session_id: str
+    question: PublicEssayQuestion
+
+
+class EssayResultResponse(BaseModel):
+    session_id: str
+    evaluation: EssayEvaluation
+    suggested_answer: str = Field(
+        max_length=500,
+        description="Đáp án tham khảo ngắn, chỉ trả về sau khi học viên đã nộp bài.",
+    )
+    source_file: str | None = None
+    page_number: int | None = None
+    chunk_id: str | None = None
