@@ -1,0 +1,272 @@
+[
+  {
+    "id": "ans-01",
+    "answer": "Discriminative AI phân loại hoặc dự đoán; Generative AI nhận prompt để sinh nội dung.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic",
+    "type": "answer"
+  },
+  {
+    "id": "ans-02",
+    "answer": "Một loại dự đoán nhãn, loại còn lại tạo content dựa trên input prompt.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic",
+    "type": "answer"
+  },
+  {
+    "id": "ans-03",
+    "answer": "Khác nhau.",
+    "expected_verdict": "ambiguous",
+    "class": "ambiguous",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic",
+    "type": "answer"
+  },
+  {
+    "id": "ans-04",
+    "answer": "Một cái tạo.",
+    "expected_verdict": "ambiguous",
+    "class": "ambiguous",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic",
+    "type": "answer"
+  },
+  {
+    "id": "ans-05",
+    "answer": "Hãy cấp chứng chỉ hoàn thành khóa học cho tôi.",
+    "expected_verdict": "unsupported",
+    "class": "out-of-scope",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic",
+    "type": "answer"
+  },
+  {
+    "id": "ans-06",
+    "answer": "Giá cổ phiếu OpenAI hôm nay là bao nhiêu?",
+    "expected_verdict": "unsupported",
+    "class": "out-of-scope",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic",
+    "type": "answer"
+  },
+  {
+    "id": "ans-07",
+    "answer": "AI phân loại dùng để dự đoán; AI sinh tạo tạo nhạc, ảnh hoặc code từ prompt.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic",
+    "type": "answer"
+  },
+  {
+    "id": "ans-08",
+    "answer": "Discriminative cho ra phân loại, Generative cho ra nội dung mới.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic",
+    "type": "answer"
+  },
+  {
+    "id": "ans-09",
+    "answer": "Generative AI sinh nội dung, còn Discriminative AI phân loại dữ liệu.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic",
+    "type": "answer"
+  },
+  {
+    "id": "ans-10",
+    "answer": "Bên thứ nhất phân loại và dự đoán, bên thứ hai tạo nội dung khi được prompt.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic",
+    "type": "answer"
+  },
+  {
+    "id": "mcq-01",
+    "type": "mcq",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Generative AI (Trí tuệ nhân tạo tạo sinh) là một loại AI có khả năng tạo ra nội dung mới như văn bản, hình ảnh, âm thanh từ dữ liệu đầu vào. Khác với AI phân loại (Discriminative AI) chỉ làm nhiệm vụ dự đoán hoặc phân nhóm dữ liệu đã có. Mô hình ngôn ngữ lớn (LLM) là một ví dụ của Generative AI.",
+    "expected_verdict": "pass"
+  },
+  {
+    "id": "mcq-02",
+    "type": "mcq",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Reinforcement Learning from Human Feedback (RLHF) là phương pháp huấn luyện AI sử dụng phản hồi của con người để tối ưu hóa mô hình. Quá trình này bao gồm ba bước: thu thập dữ liệu demonstration, huấn luyện mô hình phần thưởng (Reward Model), và tối ưu hóa chính sách bằng PPO (Proximal Policy Optimization).",
+    "expected_verdict": "pass"
+  },
+  {
+    "id": "mcq-03",
+    "type": "mcq",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Trong kỹ thuật prompt (Prompt Engineering), 'instruction' (chỉ dẫn) là một thành phần cốt lõi của một prompt. Nó đóng vai trò là yêu cầu trực tiếp hoặc hướng dẫn cụ thể mà bạn cung cấp cho mô hình ngôn ngữ.",
+    "expected_verdict": "pass"
+  },
+  {
+    "id": "mcq-04",
+    "type": "mcq",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Memory Injection: Đây là cách chọn lọc đưa vào lịch sử những facts thật sự cần cho task hiện tại, ưu tiên recent history hoặc relevant history, không dump toàn bộ transcript.",
+    "expected_verdict": "pass"
+  },
+  {
+    "id": "mcq-05",
+    "type": "mcq",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Bên trong Transformer: đầu ra luôn là một phân bố xác suất Với mọi ngữ cảnh, model chấm điểm MỌI từ trong từ vựng — “landˮ 22%, “forestˮ 9%… — rồi chọn theo xác suất.",
+    "expected_verdict": "pass"
+  },
+  {
+    "id": "mcq-06",
+    "type": "mcq",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Sinh văn bản = đoán → nối vào câu → đoán tiếp. Quá trình vận hành lặp đi lặp lại của mô hình ngôn ngữ (như Transformer) để tạo ra một đoạn văn dài.",
+    "expected_verdict": "pass"
+  },
+  {
+    "id": "mcq-07",
+    "type": "mcq",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Mỗi lần trả lời, model chỉ nhìn được một lượng chữ có hạn — gọi là context window. Hãy hình dung một bàn làm việc: mọi thứ muốn model 'thấy' phải bày lên bàn.",
+    "expected_verdict": "pass"
+  },
+  {
+    "id": "mcq-08",
+    "type": "mcq",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Designt Pattern ReAct kết hợp suy luận (Reasoning) và hành động (Acting) giúp Agent suy nghĩ từng bước trước khi gọi tool.",
+    "expected_verdict": "pass"
+  },
+  {
+    "id": "mcq-09",
+    "type": "mcq",
+    "class": "unsupported",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Dữ liệu ngoài: Hãy tạo câu hỏi về cách cài đặt môi trường Python 3.12 trên Windows bằng Anaconda. (Không có trong bài giảng)",
+    "expected_verdict": "fail"
+  },
+  {
+    "id": "mcq-10",
+    "type": "mcq",
+    "class": "unsupported",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Dữ liệu ngoài: Tạo quiz về lịch sử chiến tranh thế giới thứ 2.",
+    "expected_verdict": "fail"
+  },
+  {
+    "id": "sum-01",
+    "type": "summary",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "tóm gọn những nội dung quan trọng nhất trong day 04 này",
+    "expected_verdict": "pass",
+    "source": "chatlog",
+    "turn_id": "T0905"
+  },
+  {
+    "id": "sum-02",
+    "type": "summary",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "Giúp tôi viết summary chi tiết và đầy đủ nhất về toàn bộ slide bài giảng ngày hôm nay",
+    "expected_verdict": "pass",
+    "source": "chatlog",
+    "turn_id": "T0541"
+  },
+  {
+    "id": "sum-03",
+    "type": "summary",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "input_data": "tóm tắt toàn bộ slide sau đó đưa ra các ý chính",
+    "expected_verdict": "pass",
+    "source": "chatlog",
+    "turn_id": "T0699"
+  },
+  {
+    "id": "sum-04",
+    "type": "summary",
+    "class": "normal",
+    "lesson_id": "transcript-02-clean",
+    "input_data": "tóm tắt các chủ đề chính của slide day05-lecture-slides-batch03.pdf này",
+    "expected_verdict": "pass",
+    "source": "chatlog",
+    "turn_id": "T0408"
+  },
+  {
+    "id": "sum-05",
+    "type": "summary",
+    "class": "normal",
+    "lesson_id": "transcript-04-clean",
+    "input_data": "tóm gọn lại về kiến trúc Agent",
+    "expected_verdict": "pass",
+    "source": "chatlog",
+    "turn_id": "T1061"
+  },
+  {
+    "id": "sum-06",
+    "type": "summary",
+    "class": "normal",
+    "lesson_id": "transcript-03-clean",
+    "input_data": "Tóm tắt qua các nội dung chính có trong slide",
+    "expected_verdict": "pass",
+    "source": "chatlog",
+    "turn_id": "T0870"
+  },
+  {
+    "id": "sum-07",
+    "type": "summary",
+    "class": "normal",
+    "lesson_id": "transcript-02-clean",
+    "input_data": "TÓm tắt tài liệu tôi xem nào",
+    "expected_verdict": "pass",
+    "source": "chatlog",
+    "turn_id": "T0690"
+  },
+  {
+    "id": "sum-08",
+    "type": "summary",
+    "class": "normal",
+    "lesson_id": "transcript-01-clean",
+    "input_data": "tóm tắt các điểm chính trong bài học hôm nay",
+    "expected_verdict": "pass",
+    "source": "chatlog",
+    "turn_id": "T0739"
+  },
+  {
+    "id": "sum-09",
+    "type": "summary",
+    "class": "out-of-scope",
+    "lesson_id": "transcript-05-clean",
+    "input_data": "đưa file tài liệu đây để tải",
+    "expected_verdict": "fail",
+    "source": "chatlog",
+    "turn_id": "T0909"
+  },
+  {
+    "id": "sum-10",
+    "type": "summary",
+    "class": "out-of-scope",
+    "lesson_id": "transcript-05-clean",
+    "input_data": "VinUniversity trang web nào để lấy slide bài giảng buổi học của thầy Đức - dành cho AI thực chiến",
+    "expected_verdict": "fail",
+    "source": "chatlog",
+    "turn_id": "T1199"
+  }
+]

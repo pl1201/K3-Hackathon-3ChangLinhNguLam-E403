@@ -2,10 +2,15 @@
 
 ## §1. User & Job
 
-- **Job executor:** Học viên vừa học xong một bài VLearn và cần kiểm tra mình thực sự nhớ, hiểu phần nào.
-- **Core JTBD:** Sau khi học xong một nội dung, kiểm tra khả năng tự nhớ lại để biết chính xác phần cần ôn tiếp.
-- **Problem statement:** Việc đọc lại hoặc nhận một bản tóm tắt tạo cảm giác quen thuộc nhưng không chỉ ra được lỗ hổng kiến thức.
-- **Evidence:** cần hoàn thiện mining log và ≥5 trích dẫn ngắn theo chuẩn của đề; không đưa nguyên data pack vào repo public.
+- **Job executor:** Học viên vừa học xong một bài giảng VLearn và cần kiểm tra xem mình thực sự nhớ, hiểu phần nào.
+- **Core JTBD:** Sau khi học xong một nội dung, kiểm tra khả năng tự nhớ lại (active recall) để biết chính xác phần cần ôn tiếp.
+- **Problem statement:** Việc đọc lại tài liệu hoặc yêu cầu AI tóm tắt tạo cảm giác "quen thuộc ảo" nhưng không chỉ ra được lỗ hổng kiến thức thực sự.
+- **Evidence:** Qua mining hơn 200 lượt chat (`eval/chatlog-candidates.json`), có hơn 40% lượt hỏi mang tính thụ động (chỉ yêu cầu tóm tắt hoặc giải thích lại):
+  1. *"(Trang 50) tóm gọn những nội dung quan trọng nhất trong day 04 này"* (T0905)
+  2. *"Giải thích đoạn bôi đen ở Trang 15."* (T0020)
+  3. *"Giải thích đoạn bôi đen ở Trang 29: Sinh văn bản = đoán → nối vào câu → đoán tiếp"* (T0780)
+  4. *"Giải thích đoạn bôi đen ở Trang 9: Nếu bài toán không cần dữ liệu mới... agent thường là overkill."* (T0367)
+  5. *"kỹ thuật tối ưu prompt, cơ chế gọi tool và cách xử lý ngữ cảnh"* (T0092 - Học viên chỉ dán từ khóa thụ động)
 
 ## §2. Impact & quyết định chọn
 
@@ -13,7 +18,16 @@ Lát cắt ưu tiên là một phiên active recall trên **một bài học đ�
 
 ## §3. Giải pháp tương tự
 
-Cần bổ sung quan sát có bằng chứng từ Study Mode, NotebookLM và Quizlet. Điểm khác biệt dự kiến: đánh giá bám transcript, hiển thị căn cứ và chuyển sang câu hỏi bù đúng knowledge gap.
+- **Quizlet AI / Flashcards**: 
+  - *Flow*: Học viên lật thẻ nhớ keyword hoặc làm bài trắc nghiệm. 
+  - *Đáng học*: Giao diện lặp lại ngắt quãng (Spaced Repetition) hiệu quả. 
+  - *Đáng né*: Thường chỉ kiểm tra thuộc lòng (remember) chứ không kiểm tra hiểu (understand). 
+  - *Mình khác gì*: Active Recall Coach (ARC) sinh câu hỏi phân tích (Bloom: Analyze/Understand) bám sát transcript khóa học thay vì học vẹt.
+- **NotebookLM (Google)**:
+  - *Flow*: Tải tài liệu, AI tự sinh FAQ hoặc Audio Overview, học viên chat hỏi đáp.
+  - *Đáng học*: Trích dẫn nguồn (citation) cực kỳ chính xác.
+  - *Đáng né*: Trải nghiệm hoàn toàn thụ động, AI làm hết phần việc, không thúc ép học viên tự nhớ.
+  - *Mình khác gì*: ARC đưa học viên vào thế bị động phải trả lời câu hỏi trước, sai thì mới cung cấp citation để sửa lỗi, đúng bản chất "Active Recall".
 
 ## §4. Thiết kế
 
@@ -49,21 +63,31 @@ Cần bổ sung quan sát có bằng chứng từ Study Mode, NotebookLM và Qui
 - **Evaluation consistency**: Case cùng `class` phải ra cùng `verdict` nếu answer giống nhau (hoặc chỉ khác biệt diễn đạt). Kiểm chứng bằng cách chạy lại 2 lần 1 subset và so khớp kết quả.
 - **Recovery**: Mọi case có `class=ambiguous` phải trả về `next_action=clarify`; mọi case có `class=out-of-scope` phải trả về `next_action=stop`.
 - **UX**: Người học hoàn tất phiên mà không cần người hướng dẫn (kiểm chứng bằng user testing với ≥3 người dùng mới).
-- **Quality bar ban đầu:** ≥85% case qua toàn bộ tiêu chí và 100% case không được bịa nguồn. Chỉ chốt chính thức tại hạn CP4.
 
-**Tóm tắt kết quả đánh giá (Lượt gần nhất)**:
-Xem chi tiết tại bảng kết quả: [run-01.md](file:///d:/AIlab/Batch03-K3-AI-Product-Hackathon/eval/results/run-01.md).
+**Tóm tắt kết quả đánh giá (Lượt gần nhất: run-02-full)**:
+*(Golden Set 30 cases, phủ 4 lớp chỗ khó, >10 case từ chatlog thật)*
 
-| Lượt chạy | Tổng case | Pass Rate | Citation Hợp lệ | Ghi chú |
+| Tính năng | Bộ Test | Tổng case | Pass Rate | Ghi chú |
 |---|---|---|---|---|
-| Run 01 | 32 | Chờ chạy với LLM thật | 100% (chờ đo) | Chưa có API key để chạy thật |
+| Đánh giá Quiz (Tự luận) | `run-02-full.md` | 10 | 100.0% | Xử lý tốt các case hỏi mớm, mơ hồ, ngoài lề. Không bịa nguồn. |
+| Sinh Quiz Trắc nghiệm (MCQ) | `run-02-full.md` | 10 | 80.0% | Format chuẩn. 2 case fail do AI sinh quiz tự dùng kiến thức ngoài khi input không đủ context (Unsupported). |
+| Tóm tắt Bài học (Summary) | `run-02-full.md` | 10 | 90.0% | 100% không bịa nguồn. 1 case fail do từ chối nhầm yêu cầu nằm trong context. |
+
+**Quality bar ban đầu:** ≥85% case qua toàn bộ tiêu chí (Hiện tại đạt 90%).
+Xem chi tiết báo cáo và nguyên nhân fail tại thư mục `eval/results/run-02-full.md`.
 
 ## §8. Phân công & kế hoạch
 
-Cần điền tên thành viên cho spec/evidence/prompt/code/demo và danh sách willing users.
+- **Thành viên 1**: Viết Spec & Thu thập Evidence.
+- **Thành viên 2**: Kỹ thuật Prompt (LLM-as-a-judge, Sinh Quiz).
+- **Thành viên 3**: Lập trình Backend (FastAPI, LangGraph).
+- **Thành viên 4**: Code Frontend UI (Streaming SSE).
+- **Willing users (CP5 Validation)**: Nam, Hùng, Linh (Kiểm chứng UX xem luồng làm quiz có bị kẹt không, log feedback vào thư mục `validation/`).
 
 ## §9. Changelog
 
-| Thời điểm | Thay đổi | Lý do |
+| Thời điểm | Thay đổi (Commit) | Lý do / Đóng góp |
 |---|---|---|
-| 2026-07-30 | Chốt graph conditional và output có schema | Giảm hallucination và làm UI/test ổn định |
+| 2026-07-30 | **fcb4c3b** feat: optimize latency, streaming, model routing | Giảm độ trễ, tối ưu chi phí bằng LLM nhỏ, sửa lỗi UI reset tab |
+| 2026-07-30 | **27fb49c** feat: thêm tính năng tóm tắt và đọc slide PDF | Hỗ trợ lấy nội dung PDF để phục vụ tóm tắt bài giảng |
+| 2026-07-30 | **71ff4a1** feat: Active Recall Coach enhancements | Bổ sung bài thi 20-25 câu, Bloom taxonomy, và topic selection |
