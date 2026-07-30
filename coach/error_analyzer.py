@@ -26,6 +26,7 @@ Dữ liệu:
 Hãy phân tích tư duy của học viên: Việc họ chọn đáp án sai đó chứng tỏ họ đang bị hổng kiến thức ở điểm nào?
 Họ đang nhầm lẫn khái niệm gì với khái niệm gì?
 Từ đó, trích xuất ra một chủ đề lỗi sai (misconception_topic) và lời giải thích (misconception_explanation).
+Trả lời thật ngắn: tối đa 2 câu, khoảng 45 từ; chỉ nêu điểm đang nhầm và điều cần nhớ.
 """
 
 def analyze_user_error(

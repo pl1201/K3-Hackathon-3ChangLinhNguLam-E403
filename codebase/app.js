@@ -1,11 +1,13 @@
 /* ============================================================
    VLearn Study Studio — App Logic
-   Agent: Summarize → Topic Select → Quiz (20-25 câu) → Gap Summary
+   Agent: Summarize → Topic Select → Quiz (5-25 câu) → Gap Summary
    ============================================================ */
 
 // ─── State ───────────────────────────────────────────────────
 const state = {
   sessionId: null,
+  essaySessionId: null,
+  essayQuestion: null,
   selectedIndex: null,
   question: null,
   lastAction: "start",
@@ -17,7 +19,10 @@ const state = {
   slideIndex: 0,
   slideTotalCount: 0,
   selectedBloom: "analyze",
+  selectedQuizCount: 20,
   selectedTopicQuery: null,
+  structuredSummary: null,
+  summaryLessonId: null,
   errorLog: [],         // [{question, correctAnswer, userAnswer, misconception}]
 };
 
@@ -69,6 +74,7 @@ const AGENT_PANELS = [
   "agent-summary-chat",
   "agent-topic-select",
   "agent-quiz-flow",
+  "agent-essay",
   "agent-done",
   "agent-error",
 ];
@@ -170,39 +176,328 @@ async function agentStart() {
 }
 
 // ─── Summary ─────────────────────────────────────────────────
-async function showSummary(lessonId) {
+function openSummaryWorkspace() {
   state.agentPhase = "summary";
-  setAgentStatus("active", "Tóm tắt xong");
+  setAgentStatus("active", "Sẵn sàng tóm tắt");
   showAgentPanel("agent-summary");
 
-  const summaryData = getSummaryForLesson(lessonId);
+  const messages = $("#summary-inline-messages");
+  if (!messages.children.length) {
+    appendInlineSummaryMessage(
+      "assistant",
+      "Chào bạn! Hãy nhập bài, chủ đề hoặc khoảng slide cần ôn. Mình sẽ trả về các điểm học cốt lõi kèm đúng nguồn."
+    );
+  }
+
+  if (state.structuredSummary && state.summaryLessonId === $("#lesson-id").value) {
+    renderStructuredSummary(state.structuredSummary, state.summaryLessonId);
+  }
+
+  $("#summary-inline-input")?.focus();
+}
+
+function goHome() {
+  state.agentPhase = "idle";
+  setAgentStatus("idle", "Sẵn sàng");
+  showAgentPanel("agent-welcome");
+}
+
+async function showSummary(lessonId) {
+  state.agentPhase = "summary";
+  setAgentStatus("busy", "Đang tóm tắt…");
+  showAgentPanel("agent-summary");
+
+  const body = $("#summary-body");
+  body.innerHTML = `<div class="summary-loading">Đang lọc các điểm học quan trọng…</div>`;
+
+  try {
+    const data = await request("/api/structured-summary", {
+      method: "POST",
+      body: JSON.stringify({ lesson_id: lessonId }),
+    });
+    state.structuredSummary = data.summary;
+    state.summaryLessonId = lessonId;
+    renderStructuredSummary(data.summary, lessonId);
+    appendInlineSummaryMessage("assistant", "Mình đã lọc các điểm cốt lõi và gắn nguồn để bạn xem lại nhanh.");
+    setAgentStatus("active", "Tóm tắt xong");
+  } catch (err) {
+    const fallback = getSummaryForLesson(lessonId);
+    renderLegacySummary(fallback);
+    setAgentStatus("active", "Bản tóm tắt dự phòng");
+    showToast("Chưa tạo được dẫn nguồn động; đang dùng bản tóm tắt dự phòng.");
+  }
+}
+
+function appendInlineSummaryMessage(role, text) {
+  const message = document.createElement("div");
+  message.className = `summary-inline-message ${role}`;
+  message.textContent = text;
+  $("#summary-inline-messages").appendChild(message);
+  message.scrollIntoView({ block: "nearest" });
+  return message;
+}
+
+async function sendInlineSummaryMessage() {
+  const input = $("#summary-inline-input");
+  const query = input.value.trim();
+  if (!query) return;
+  input.value = "";
+  appendInlineSummaryMessage("user", query);
+  const answer = appendInlineSummaryMessage("assistant loading", "Đang lọc micro-facts từ nguồn…");
+  setAgentStatus("busy", "Đang tóm tắt…");
+  const lessonId = $("#lesson-id").value;
+
+  try {
+    const data = await request("/api/structured-summary", {
+      method: "POST",
+      body: JSON.stringify({
+        lesson_id: lessonId,
+        query,
+      }),
+    });
+    answer.classList.remove("loading");
+    answer.textContent = "";
+    renderStructuredSummaryInto(answer, data.summary, data.lesson_id || lessonId);
+    setAgentStatus("active", "Tóm tắt xong");
+  } catch (err) {
+    answer.classList.remove("loading");
+    answer.textContent = `Mình chưa tóm tắt được phần này: ${err.message}`;
+    setAgentStatus("idle", "Lỗi");
+  }
+}
+
+function renderStructuredSummary(summary, lessonId) {
+  const body = $("#summary-body");
+  body.classList.remove("hidden");
+  body.innerHTML = "";
+  renderStructuredSummaryInto(body, summary, lessonId);
+}
+
+function renderStructuredSummaryInto(container, summary, lessonId) {
+  (summary.topics || []).forEach((topic) => {
+    const section = document.createElement("section");
+    section.className = "summary-fact-group";
+
+    const heading = document.createElement("h4");
+    heading.textContent = topic.topic_name;
+    section.appendChild(heading);
+
+    (topic.micro_facts || []).forEach((fact) => {
+      const card = document.createElement("article");
+      card.className = `summary-fact${fact.is_core_concept ? " core" : ""}`;
+
+      const text = document.createElement("p");
+      text.textContent = fact.fact;
+      card.appendChild(text);
+
+      if (fact.page_number || fact.chunk_id) {
+        const citation = document.createElement("span");
+        citation.className = "source-citation";
+        citation.textContent = fact.page_number
+          ? `[Page ${fact.page_number}${fact.source_file ? ` / ${fact.source_file}` : ""}]`
+          : `[Chunk ID: ${fact.chunk_id}]`;
+        card.appendChild(citation);
+
+        const sourceButton = createSourceJumpButton({
+          lessonId,
+          sourceFile: fact.source_file,
+          pageNumber: fact.page_number,
+          chunkId: fact.chunk_id,
+        });
+        card.appendChild(sourceButton);
+      }
+      section.appendChild(card);
+    });
+    container.appendChild(section);
+  });
+
+  if (summary.summary_notes) {
+    const note = document.createElement("div");
+    note.className = "summary-quick-note";
+    note.textContent = summary.summary_notes;
+    container.appendChild(note);
+  }
+}
+
+function renderLegacySummary(summaryData) {
   const body = $("#summary-body");
   body.innerHTML = "";
+  const section = document.createElement("div");
+  section.className = "summary-section";
+  section.innerHTML = `<h4>📌 Nội dung cốt lõi</h4><p></p>`;
+  section.querySelector("p").textContent = summaryData.core;
+  body.appendChild(section);
 
-  const section1 = document.createElement("div");
-  section1.className = "summary-section";
-  section1.innerHTML = `<h4>📌 Nội dung cốt lõi</h4><p>${summaryData.core}</p>`;
-  body.appendChild(section1);
-
-  const section2 = document.createElement("div");
-  section2.className = "summary-section";
-  const ul = document.createElement("ul");
-  ul.className = "summary-key-points";
-  summaryData.points.forEach((pt) => {
-    const li = document.createElement("li");
-    li.textContent = pt;
-    ul.appendChild(li);
+  const list = document.createElement("ul");
+  list.className = "summary-key-points";
+  summaryData.points.forEach((point) => {
+    const item = document.createElement("li");
+    item.textContent = point;
+    list.appendChild(item);
   });
-  section2.innerHTML = `<h4>🔑 Điểm học trọng tâm</h4>`;
-  section2.appendChild(ul);
-  body.appendChild(section2);
+  body.appendChild(list);
+}
 
-  if (summaryData.note) {
-    const section3 = document.createElement("div");
-    section3.className = "summary-section";
-    section3.innerHTML = `<h4>💡 Ghi nhớ nhanh</h4><p>${summaryData.note}</p>`;
-    body.appendChild(section3);
+async function startEssay() {
+  state.agentPhase = "essay";
+  setAgentStatus("busy", "Đang tạo tự luận…");
+  showAgentPanel("agent-essay");
+  $("#essay-question-text").textContent = "Đang tạo câu hỏi tự luận từ nguồn…";
+  $("#essay-question-source").innerHTML = "";
+  $("#essay-result").classList.add("hidden");
+  $("#essay-answer-input").value = "";
+  $("#essay-submit").disabled = true;
+
+  try {
+    const data = await request("/api/essay/sessions", {
+      method: "POST",
+      body: JSON.stringify({
+        lesson_id: $("#lesson-id").value,
+        topic_query: state.selectedTopicQuery || "Nội dung bài học này",
+        bloom_level: state.selectedBloom || "analyze",
+      }),
+    });
+    state.essaySessionId = data.session_id;
+    state.essayQuestion = data.question;
+    $("#essay-question-text").textContent = data.question.question_text;
+    renderEssaySource($("#essay-question-source"), data.question);
+    $("#essay-submit").disabled = false;
+    setAgentStatus("active", "Tự luận");
+    $("#essay-answer-input").focus();
+  } catch (err) {
+    $("#essay-question-text").textContent = `Không tạo được câu hỏi: ${err.message}`;
+    setAgentStatus("idle", "Lỗi");
   }
+}
+
+async function submitEssayAnswer() {
+  const answerText = $("#essay-answer-input").value.trim();
+  if (answerText.length < 10) {
+    showToast("Câu trả lời cần ít nhất 10 ký tự.");
+    return;
+  }
+  const button = $("#essay-submit");
+  button.disabled = true;
+  button.textContent = "Đang chấm…";
+  setAgentStatus("busy", "Đang chấm tự luận…");
+
+  try {
+    const data = await request("/api/essay/answers", {
+      method: "POST",
+      body: JSON.stringify({
+        session_id: state.essaySessionId,
+        answer_text: answerText,
+      }),
+    });
+    $("#essay-result").classList.remove("hidden");
+    $("#essay-score").textContent = `${data.evaluation.score}/10`;
+    $("#essay-feedback").textContent = data.evaluation.feedback;
+    $("#essay-suggested-answer").textContent = data.suggested_answer;
+    renderEssayRubric(data.evaluation.rubric_breakdown || []);
+    renderTextList($("#essay-strengths"), data.evaluation.strengths, "Chưa có");
+    renderTextList($("#essay-missing"), data.evaluation.missing_points, "Không có");
+    renderEssaySource($("#essay-result-source"), data);
+    setAgentStatus("active", "Đã chấm xong");
+  } catch (err) {
+    showToast(`Chưa chấm được: ${err.message}`);
+    setAgentStatus("idle", "Lỗi");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Chấm lại →";
+  }
+}
+
+function renderEssayRubric(items) {
+  const container = $("#essay-rubric-breakdown");
+  container.innerHTML = "";
+  const labels = {
+    met: "Đạt",
+    partial: "Đạt một phần",
+    missing: "Chưa đạt",
+  };
+  items.forEach((item) => {
+    const row = document.createElement("div");
+    row.className = `essay-rubric-row ${item.status}`;
+
+    const main = document.createElement("div");
+    main.className = "essay-rubric-main";
+    const criterion = document.createElement("span");
+    criterion.textContent = item.criterion;
+    const status = document.createElement("em");
+    status.textContent = labels[item.status] || item.status;
+    main.append(criterion, status);
+
+    const points = document.createElement("strong");
+    points.textContent = `${item.points}/${item.max_points}`;
+    const reason = document.createElement("p");
+    reason.textContent = item.reason;
+    row.append(main, points, reason);
+    container.appendChild(row);
+  });
+}
+
+function renderTextList(container, items, emptyText) {
+  container.innerHTML = "";
+  const values = items?.length ? items : [emptyText];
+  values.forEach((value) => {
+    const item = document.createElement("li");
+    item.textContent = value;
+    container.appendChild(item);
+  });
+}
+
+function renderEssaySource(container, source) {
+  container.innerHTML = "";
+  if (!source.page_number && !source.chunk_id) return;
+  container.appendChild(createSourceJumpButton({
+    lessonId: $("#lesson-id").value,
+    sourceFile: source.source_file,
+    pageNumber: source.page_number,
+    chunkId: source.chunk_id,
+  }));
+}
+
+function createSourceJumpButton({ lessonId, sourceFile, pageNumber, chunkId }) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "source-jump-btn";
+  button.textContent = pageNumber
+    ? `↗ Mở Slide trang ${pageNumber}`
+    : `↗ Mở đoạn ${chunkId}`;
+  button.addEventListener("click", () => {
+    jumpToSource({ lessonId, sourceFile, pageNumber, chunkId });
+  });
+  return button;
+}
+
+function jumpToSource({ lessonId, sourceFile, pageNumber, chunkId }) {
+  const pdfKey = sourceFile?.includes("d1-slide") ? "day1"
+    : sourceFile?.includes("d2-slide") ? "day2"
+      : (lessonId === "day1" || lessonId === "day2" ? lessonId : null);
+  const targetKey = pdfKey || lessonId || $("#lesson-id").value;
+
+  $$(".source-item").forEach((item) => {
+    const isTarget = item.dataset.slide === targetKey || item.dataset.id === targetKey;
+    item.classList.toggle("active", isTarget);
+    item.setAttribute("aria-pressed", String(isTarget));
+  });
+
+  renderSlideDeck(targetKey);
+
+  if (pdfKey && pageNumber) {
+    const deck = SLIDE_DECKS[pdfKey];
+    const object = $("#slide-track object");
+    if (object) {
+      object.setAttribute("data", `${deck.pdfUrl}#page=${pageNumber}&toolbar=1&navpanes=0`);
+    }
+    showToast(`Đã mở ${deck.filename} — trang ${pageNumber}.`);
+    return;
+  }
+
+  if (pageNumber && SLIDE_DECKS[targetKey]?.slides) {
+    goToSlide(Math.max(0, pageNumber - 1));
+  }
+  showToast(chunkId ? `Nguồn: ${chunkId}` : "Đã mở nguồn liên quan.");
 }
 
 function getSummaryForLesson(lessonId) {
@@ -313,6 +608,23 @@ $$(".bloom-chip").forEach((chip) => {
   });
 });
 
+// Quiz question count selection
+$$(".quiz-count-chip").forEach((chip) => {
+  chip.addEventListener("click", () => {
+    $$(".quiz-count-chip").forEach((item) => {
+      item.classList.remove("active");
+      item.setAttribute("aria-checked", "false");
+    });
+    chip.classList.add("active");
+    chip.setAttribute("aria-checked", "true");
+    state.selectedQuizCount = Number(chip.dataset.count);
+    const confirmButton = $("#topic-confirm-btn");
+    if (confirmButton) {
+      confirmButton.innerHTML = `<span>▶</span> Tạo bộ Quiz ${state.selectedQuizCount} câu`;
+    }
+  });
+});
+
 // Custom input clears chip selection
 document.addEventListener("DOMContentLoaded", () => {
   const customInput = $("#topic-custom-input");
@@ -345,13 +657,13 @@ async function startQuizWithTopic() {
         topic_query: state.selectedTopicQuery || "Nội dung bài học này",
         lesson_id: lessonId,
         bloom_level: state.selectedBloom || "analyze",
-        num_questions: 20,
+        num_questions: state.selectedQuizCount,
       }),
     });
 
     setProgressStep({ read: "done", summarize: "done", quiz: "done" });
     state.sessionId = data.session_id;
-    state.targetTotal = data.total_questions || 20;
+    state.targetTotal = data.total_questions || state.selectedQuizCount;
 
     if (data.phase === "failed" || !data.question) {
       throw new Error("Không tạo được câu hỏi. Hãy thử chủ đề khác.");
@@ -463,7 +775,7 @@ async function submitQuizAnswer() {
 
     updateAgentProgress();
     updateQuizFlowHeader(data.current_question_idx ?? state.answered, data.total_questions ?? state.targetTotal);
-    renderQuizResult(data);
+    const quizFinished = renderQuizResult(data);
     setAgentStatus("active", "Đang quiz");
 
     if (!data.is_correct) {
@@ -471,26 +783,38 @@ async function submitQuizAnswer() {
       misconEl.classList.remove("hidden");
       const misconText = $("#qf-misconception-text");
       misconText.textContent = "Đang phân tích lỗi sai...";
-      
+      const gapEntry = {
+        question: state.question?.question_text || "—",
+        explanation: data.explanation || "",
+        misconception: "Chưa có phân tích chi tiết.",
+        sourceFile: data.review_source_file,
+        pageNumber: data.review_page_number,
+        correctAnswer: null,
+      };
+      state.errorLog.push(gapEntry);
+
       try {
         let fullText = "";
+        let rawText = "";
         await requestStream("/api/quiz/stream_error", {
           method: "POST",
           body: JSON.stringify({ session_id: state.sessionId }),
         }, (chunk) => {
-          fullText += chunk;
-          misconText.innerHTML = fullText.replace(/\n/g, "<br>");
-        });
-        
-        state.errorLog.push({
-          question: state.question?.question_text || "—",
-          explanation: data.explanation || "",
-          misconception: fullText,
-          correctAnswer: null, 
+          rawText += chunk;
+          fullText = rawText.length > 280
+            ? `${rawText.slice(0, 279).trimEnd()}…`
+            : rawText;
+          misconText.textContent = fullText;
+          gapEntry.misconception = fullText;
         });
       } catch (err) {
-        misconText.textContent = "Lỗi phân tích: " + err.message;
+        const fallback = "Hãy xem lại ý cốt lõi trong lời giải và nguồn được dẫn.";
+        gapEntry.misconception = fallback;
+        misconText.textContent = fallback;
       }
+    }
+    if (quizFinished) {
+      setTimeout(showAgentDone, 250);
     }
   } catch (err) {
     showAgentError(err.message);
@@ -518,6 +842,20 @@ function renderQuizResult(data) {
 
   $("#qf-explanation").textContent = data.explanation || "Chưa có phần giải thích.";
 
+  const sourceButton = $("#qf-source-jump");
+  const hasReviewSource = !isCorrect && (data.review_page_number || data.review_source_file);
+  sourceButton.classList.toggle("hidden", !hasReviewSource);
+  if (hasReviewSource) {
+    sourceButton.textContent = data.review_page_number
+      ? `↗ Mở Slide trang ${data.review_page_number}`
+      : "↗ Mở Slide nguồn";
+    sourceButton.onclick = () => jumpToSource({
+      lessonId: $("#lesson-id").value,
+      sourceFile: data.review_source_file,
+      pageNumber: data.review_page_number,
+    });
+  }
+
   const misconEl = $("#qf-misconception");
   if (isCorrect) {
     misconEl.classList.add("hidden");
@@ -542,8 +880,7 @@ function renderQuizResult(data) {
   if (isDone || (!hasNext && !followUp)) {
     nextBtn.classList.add("hidden");
     reinforceBtn.classList.add("hidden");
-    setTimeout(() => showAgentDone(), 900);
-    return;
+    return true;
   }
 
   nextBtn.onclick = () => {
@@ -554,6 +891,7 @@ function renderQuizResult(data) {
     }
   };
   reinforceBtn.onclick = () => renderQuizQuestion(data.question);
+  return false;
 }
 
 async function fetchNextQuestion(currentIdx, total) {
@@ -618,7 +956,7 @@ function showAgentDone() {
 
   const titleEl = document.createElement("h4");
   titleEl.className = "done-gap-title";
-  titleEl.innerHTML = `📋 Tổng hợp lỗ hổng kiến thức <span class="gap-count">${state.errorLog.length} điểm cần ôn</span>`;
+  titleEl.innerHTML = `📋 Tổng hợp lỗ hổng kiến thức <span class="gap-count">${state.gaps} điểm cần ôn</span>`;
   gapSection.appendChild(titleEl);
 
   state.errorLog.forEach((err, i) => {
@@ -645,6 +983,14 @@ function showAgentDone() {
       item.appendChild(eEl);
     }
 
+    if (err.pageNumber || err.sourceFile) {
+      item.appendChild(createSourceJumpButton({
+        lessonId: $("#lesson-id").value,
+        sourceFile: err.sourceFile,
+        pageNumber: err.pageNumber,
+      }));
+    }
+
     gapSection.appendChild(item);
   });
 }
@@ -658,6 +1004,8 @@ function showAgentError(message) {
 
 function resetAgent() {
   state.sessionId = null;
+  state.essaySessionId = null;
+  state.essayQuestion = null;
   state.selectedIndex = null;
   state.question = null;
   state.answered = 0;
@@ -666,12 +1014,21 @@ function resetAgent() {
   state.agentPhase = "idle";
   state.errorLog = [];
   state.selectedTopicQuery = null;
+  state.structuredSummary = null;
+  state.summaryLessonId = null;
   updateAgentProgress();
   setAgentStatus("idle", "Sẵn sàng");
   showAgentPanel("agent-welcome");
   // Clear chat messages
   const chatMsgs = $("#summary-chat-messages");
   if (chatMsgs) chatMsgs.innerHTML = "";
+  const inlineMessages = $("#summary-inline-messages");
+  if (inlineMessages) inlineMessages.innerHTML = "";
+  const summaryBody = $("#summary-body");
+  if (summaryBody) {
+    summaryBody.classList.add("hidden");
+    summaryBody.innerHTML = `<div class="summary-empty-state">Chọn “Tóm tắt toàn bộ” hoặc nhắn phần bạn muốn ôn nhanh.</div>`;
+  }
 }
 
 // ─── Summary Chat Mode ─────────────────────────────────────────
@@ -1167,9 +1524,18 @@ $$(".source-item").forEach((item) => {
     const id = item.dataset.id;
     const slideKey = item.dataset.slide;
     const key = id || slideKey;
+    const previousLessonId = $("#lesson-id").value;
 
     if (key) {
       $("#lesson-id").value = key;
+    }
+
+    if (previousLessonId !== key) {
+      state.structuredSummary = null;
+      state.summaryLessonId = null;
+      $("#summary-inline-messages").innerHTML = "";
+      $("#summary-body").classList.add("hidden");
+      $("#summary-body").innerHTML = `<div class="summary-empty-state">Chọn “Tóm tắt toàn bộ” hoặc nhắn phần bạn muốn ôn nhanh.</div>`;
     }
 
     renderSlideDeck(key);
@@ -1245,8 +1611,20 @@ $$(".dot").forEach((dot) => {
 
 // ─── Agent Button Events ──────────────────────────────────────
 // Welcome screen dual buttons
-$("#agent-summary-btn").addEventListener("click", startSummaryChat);
+$("#agent-summary-btn").addEventListener("click", openSummaryWorkspace);
 $("#agent-quiz-btn").addEventListener("click", showTopicSelect);
+$("#agent-essay-btn")?.addEventListener("click", startEssay);
+$("#summary-back-home")?.addEventListener("click", goHome);
+$("#topic-back-home")?.addEventListener("click", goHome);
+
+$("#summary-all-btn")?.addEventListener("click", () => {
+  $("#summary-inline-input").value = "Tóm tắt toàn bộ bài";
+  sendInlineSummaryMessage();
+});
+$("#summary-inline-send")?.addEventListener("click", sendInlineSummaryMessage);
+$("#summary-inline-input")?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") sendInlineSummaryMessage();
+});
 
 // Summary chat: switch to quiz
 $("#summary-chat-switch-quiz")?.addEventListener("click", showTopicSelect);
@@ -1257,23 +1635,24 @@ $("#summary-chat-input")?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") sendSummaryMessage();
 });
 
-// "Bắt đầu Quiz ngay" → show topic select
-$("#agent-quiz-start").addEventListener("click", showTopicSelect);
+$("#essay-back-summary")?.addEventListener("click", goHome);
+$("#essay-submit")?.addEventListener("click", submitEssayAnswer);
 
 // Topic confirm → start quiz with chosen topic & bloom
 $("#topic-confirm-btn")?.addEventListener("click", startQuizWithTopic);
 
 $("#qf-submit").addEventListener("click", submitQuizAnswer);
+$("#qf-back-summary")?.addEventListener("click", goHome);
 $("#qf-restart").addEventListener("click", resetAgent);
 $("#done-restart").addEventListener("click", resetAgent);
 $("#done-retry-topic")?.addEventListener("click", showTopicSelect);
 $("#agent-retry").addEventListener("click", () => {
   resetAgent();
-  startSummaryChat();
+  openSummaryWorkspace();
 });
 $("#summary-refresh").addEventListener("click", () => {
-  resetAgent();
-  setTimeout(startSummaryChat, 100);
+  $("#summary-inline-input").value = "Tóm tắt lại toàn bộ bài";
+  sendInlineSummaryMessage();
 });
 
 // ─── Reset Session ────────────────────────────────────────────

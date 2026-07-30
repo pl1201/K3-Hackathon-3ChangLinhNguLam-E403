@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
-from coach.quiz_graph import process_answer, quiz_graph
+from coach.quiz_graph import process_answer, quiz_graph, shuffle_quiz_options
 from coach.schemas_quiz import QuizModel
 
 
@@ -36,6 +36,23 @@ class QuizGraphTests(unittest.TestCase):
         invalid["questions"][0]["options"][1]["is_correct"] = True
         with self.assertRaises(ValidationError):
             QuizModel.model_validate(invalid)
+
+    def test_shuffle_moves_answer_and_preserves_single_correct_option(self) -> None:
+        quiz = QuizModel.model_validate_json(quiz_json(correct_index=0))
+
+        class RotateRng:
+            @staticmethod
+            def shuffle(options) -> None:
+                options.append(options.pop(0))
+
+        with patch("coach.quiz_graph.secrets.SystemRandom", return_value=RotateRng()):
+            shuffled = shuffle_quiz_options(quiz)
+
+        self.assertEqual(shuffled.questions[0].options[-1].text, "Attention")
+        self.assertEqual(
+            sum(option.is_correct for option in shuffled.questions[0].options),
+            1,
+        )
 
     def test_generation_stops_after_retry_budget(self) -> None:
         thread_id = uuid4().hex

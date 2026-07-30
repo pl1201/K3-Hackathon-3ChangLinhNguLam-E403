@@ -24,9 +24,10 @@ Luật BẮT BUỘC:
 1. Mỗi câu hỏi PHẢI có CHÍNH XÁC 4 đáp án (options).
 2. Trong 4 đáp án, PHẢI có CHÍNH XÁC 1 đáp án đúng (is_correct=true) và 3 đáp án sai (is_correct=false).
 3. Các đáp án sai (distractors) phải hợp lý, logic, ưu tiên sử dụng các thuật ngữ cùng nhóm/chuyên ngành. Bạn CÓ THỂ sử dụng danh sách Gợi ý Đáp án Nhiễu (nếu có) để chế câu sai, nhưng phải cẩn thận đừng biến chúng thành đáp án đúng.
-4. MỖI câu hỏi BẮT BUỘC phải có một lời giải thích (explanation) rõ ràng giải thích tại sao đáp án đó đúng và tại sao các đáp án kia sai.
+4. `explanation` chỉ dài 1–2 câu, tối đa khoảng 45 từ: nêu đáp án đúng và ý cốt lõi; không phân tích dài dòng từng đáp án sai.
 5. Chỉ dựa vào nội dung được cung cấp, tuyệt đối không bịa thêm kiến thức ngoài.
 6. TRÍCH DẪN NGUỒN: Nếu nội dung kiến thức đầu vào có chứa siêu dữ liệu (metadata) như Tên file (Source), Số trang (Page)... bạn BẮT BUỘC phải trích xuất và điền vào trường `source_file` và `page_number` của câu hỏi tương ứng để học viên biết đường tra cứu lại.
+7. Không cố định đáp án đúng ở lựa chọn đầu tiên. Hãy phân bố vị trí đáp án đúng đa dạng giữa các câu; hệ thống vẫn tiếp tục trộn đáp án ở server.
 """
 
 
