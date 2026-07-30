@@ -1,0 +1,98 @@
+[
+  {
+    "turn_id": "T0092",
+    "slide_id": "d1",
+    "page_num": 15,
+    "student_message": "(Trang 50, đoạn được chọn: \"kỹ thuật tối ưu prompt, cơ chế gọi tool và cách xử lý ngữ cảnh\") kỹ thuật tối ưu prompt, cơ chế gọi tool và cách xử lý ngữ cảnh",
+    "tutor_context": "Rất tiếc, tôi không tìm thấy tài liệu tổng hợp đầy đủ cho nội dung của Day 04 trong các file slide đã được cung cấp.  Để có thể giúp bạn tóm tắt chính xác, bạn có thể cho tôi biết tên các chủ đề hoặc mục tiêu học tập cụ thể trong Day 04 được ghi chú trong giáo trình của bạn không? Khi có thông tin đó, tôi sẽ giúp bạn giải thích từng phần về kỹ thuật tối ưu prompt, cơ chế gọi tool và quản lý ngữ cảnh một cách cụ thể nhất.",
+    "slide_context": "Attention: mỗi từ được “nhìn sangˮ những từ quan trọng khác Thay vì đọc tuần tự từng chữ, cơ chế attention cho phép mỗi token: N O Chủ động “quay đầuˮ nhìn lại các token trước đó trong câu H Chấm điểm mức độ liên quan của từng token đối với nghĩa của mình T A Khóa nghĩa theo ngữ cảnh — “nóˮ là quyển sách hay cái túi, tùy theoK nó chú ý vào từ nào C A H - N O I T C Đây chính là chữ T trong GPT — và là lý do model hiểu ngữ cảnh tốt hơn hẳn các thế hệ trước A N I I A Video minh họa: Attention in transformers, step-by-step - 3Blue1Brown"
+  },
+  {
+    "turn_id": "T1201",
+    "slide_id": "d1",
+    "page_num": 1,
+    "student_message": "(Trang 1, đoạn được chọn: \"tóm tắt\") tóm tắt",
+    "tutor_context": "Tool calling trong Prompt Engineering là kỹ thuật cho phép mô hình ngôn ngữ lớn (LLM) tương tác với các công cụ bên ngoài (ví dụ: truy vấn cơ sở dữ liệu, gọi API thời tiết, hoặc thực thi các hàm tính toán) để thực hiện những tác vụ mà bản thân mô hình không thể tự làm được [trang 3].  Thay vì chỉ trả về văn bản, mô hình sẽ phân tích yêu cầu của người dùng, xác định công cụ cần thiết và trả về cấu trúc dữ liệu (thường là JSON) để hệ thống thực thi công cụ đó. Sau đó, kết quả từ công cụ sẽ được đưa ngược lại cho mô hình để nó tổng hợp và đưa ra phản hồi cuối cùng cho người dùng.  Đây là một thành phần quan trọng trong việc xây dựng các AI Agents có khả năng thực hiện các hành động thực tế [trang 96].",
+    "slide_context": "AI IN ACTION  Day 1 N O H T A K AI & LLM Foundation C A H Bạn đang dùng AI mỗi ngày — nhưng thực sự bên trong n-ó đang làm gì? N O I T C A N I I A"
+  },
+  {
+    "turn_id": "T0115",
+    "slide_id": "d1",
+    "page_num": 25,
+    "student_message": "(Trang 25, đoạn được chọn: \"điêu toa\") điêu toa",
+    "tutor_context": "Rất xin lỗi, mình không tìm thấy thuật ngữ \"điêu toa\" trong tài liệu của bài học hôm nay. Có thể đây không phải là một thuật ngữ chuyên môn hoặc nằm ngoài phạm vi của nội dung slide được cung cấp.  Bạn có muốn hỏi thêm về một khái niệm cụ thể nào khác trong bài học không?",
+    "slide_context": "Cùng một mức năng lực, giá rơi khoảng 10 lần mỗi năm N O H T A K C A H - N O I T C A N I I A Việc năm ngoái phải dùng model đắt nhất — năm nay model rẻ đã làm được Tổng hợp từ bảng giá các nhà cung cấp, 20232026."
+  },
+  {
+    "turn_id": "T0154",
+    "slide_id": "d1",
+    "page_num": 25,
+    "student_message": "(Trang 25, đoạn được chọn: \"tại sao có lưu ý như trang 25\") tại sao có lưu ý như trang 25",
+    "tutor_context": "Rất tiếc, mình đã kiểm tra lại các tài liệu của bài học hôm nay nhưng không thấy trang 25 đề cập đến lưu ý nào như bạn mô tả. Có thể thông tin này nằm trong một tài liệu khác hoặc mình chưa tìm thấy đúng phần nội dung bạn đang quan tâm.  Bạn có thể vui lòng cung cấp thêm ngữ cảnh hoặc nội dung cụ thể của lưu ý đó không? Mình sẽ hỗ trợ giải đáp ngay khi có thông tin chi tiết.",
+    "slide_context": "Cùng một mức năng lực, giá rơi khoảng 10 lần mỗi năm N O H T A K C A H - N O I T C A N I I A Việc năm ngoái phải dùng model đắt nhất — năm nay model rẻ đã làm được Tổng hợp từ bảng giá các nhà cung cấp, 20232026."
+  },
+  {
+    "turn_id": "T0668",
+    "slide_id": "d1",
+    "page_num": 1,
+    "student_message": "(Trang 1, đoạn được chọn: \"phóng to slide thế nào để full màn\") phóng to slide thế nào để full màn",
+    "tutor_context": "Chào bạn, tính năng phóng to toàn màn hình của slide thường phụ thuộc vào giao diện hiển thị mà bạn đang dùng để xem bài giảng.  Thông thường, bạn có thể tìm biểu tượng có hình bốn mũi tên hướng ra ngoài (thường ở góc dưới bên phải hoặc góc trên cùng của khung trình chiếu) để chuyển sang chế độ toàn màn hình. Nếu bạn đang xem trên trình duyệt, nhấn phím **F11** trên bàn phím cũng là một cách nhanh chóng để đưa trình duyệt về chế độ full màn hình.",
+    "slide_context": "AI IN ACTION  Day 1 N O H T A K AI & LLM Foundation C A H Bạn đang dùng AI mỗi ngày — nhưng thực sự bên trong n-ó đang làm gì? N O I T C A N I I A"
+  },
+  {
+    "turn_id": "T0058",
+    "slide_id": "d2",
+    "page_num": 2,
+    "student_message": "(Trang 66, đoạn được chọn: \"xem bài tập thực hành lab day 2 chiều nay ở đaau\") xem bài tập thực hành lab day 2 chiều nay ở đaau",
+    "tutor_context": "Chào bạn, hiện tại trong tài liệu slide của ngày học hôm nay không đề cập cụ thể vị trí lưu trữ bài tập thực hành Lab Day 2. Bạn vui lòng kiểm tra trên trang chủ khóa học của hệ thống quản lý học tập (LMS) hoặc thông báo từ giảng viên để biết chính xác nơi tải bài tập nhé.",
+    "slide_context": "Agenda — Mục tiêu: Biến yêu cầu mơ hồ thành Problem Statement rõ ràng để ra quyết định SÁNG CHIỀU BÀI NỘP N O KHUNG LÝ THUYẾT 4H THỰC HÀNH LAB 4H CUỐI BUỔI H · Problem Discovery Double Diamond, HCD · Cá nhân: Tìm 5 bài toán & điền 3 Problem T· Nhật ký tìm và lọc bài toán Cá nhân) Cards A · Problem Statement & định lượng hóa · Problem Statement hoàn chỉnh Nhóm K · Nhóm: Phản biện chéo, chốt 1 bài toán · PAIR ① AI có thêm giá trị? C · Nhật ký phản tư Cá nhân) · Nhóm: Xác thực dữ liệu & vẽ quyA trình · PAIR ② Automate/Augment → H Rule/Workflow/Agent · Nhóm: Xác định giải pháp & ra quyết định - · PAIR ③ Reward function & success criteria · Cá nhân: Viết nhậ t ký phản tư Reflection Log) N · Khi AI sai & UX/HITL O I · PS hoàn chỉnh → Go/Not Yet/No-Go T C A N I I A MỞ ĐẦU · AGENDA DAY 02 · 04 / 83"
+  },
+  {
+    "turn_id": "T0020",
+    "slide_id": "d1",
+    "page_num": 15,
+    "student_message": "(Trang 15, đoạn được chọn: \"instruction\") Giải thích đoạn bôi đen ở Trang 15.",
+    "tutor_context": "Trong kỹ thuật prompt (Prompt Engineering), \"instruction\" (chỉ dẫn) là một thành phần cốt lõi của một prompt. Nó đóng vai trò là yêu cầu trực tiếp hoặc hướng dẫn cụ thể mà bạn cung cấp cho mô hình ngôn ngữ (LLM) để định hình hành vi, xác định nhiệm vụ cần thực hiện, hoặc thiết lập định dạng đầu ra mong muốn.  Nói cách khác, instruction cho mô hình biết chính xác bạn muốn nó làm gì (ví dụ: \"Tóm tắt đoạn văn sau\", \"Dịch sang tiếng Anh\", hoặc \"Giải thích khái niệm này dưới dạng mã nguồn\"). Hiệu quả của phản hồi từ mô hình thường phụ thuộc rất lớn vào độ rõ ràng và chi tiết của các chỉ dẫn này.",
+    "slide_context": "Attention: mỗi từ được “nhìn sangˮ những từ quan trọng khác Thay vì đọc tuần tự từng chữ, cơ chế attention cho phép mỗi token: N O Chủ động “quay đầuˮ nhìn lại các token trước đó trong câu H Chấm điểm mức độ liên quan của từng token đối với nghĩa của mình T A Khóa nghĩa theo ngữ cảnh — “nóˮ là quyển sách hay cái túi, tùy theoK nó chú ý vào từ nào C A H - N O I T C Đây chính là chữ T trong GPT — và là lý do model hiểu ngữ cảnh tốt hơn hẳn các thế hệ trước A N I I A Video minh họa: Attention in transformers, step-by-step - 3Blue1Brown"
+  },
+  {
+    "turn_id": "T1053",
+    "slide_id": "d1",
+    "page_num": 17,
+    "student_message": "(Trang 17, đoạn được chọn: \"Format: Output trông như thế nào?\") Giải thích đoạn bôi đen ở Trang 17.",
+    "tutor_context": "Trong cấu trúc prompt theo phương pháp RTCF (Role, Task, Context, Format), thành phần **Format** dùng để quy định hình thức, cấu trúc hoặc định dạng mà bạn muốn mô hình phản hồi [trang 17].  Việc chỉ định rõ \"Output trông như thế nào\" giúp kết quả đầu ra của mô hình trở nên nhất quán, dễ đọc và phù hợp với mục đích sử dụng của bạn. Ví dụ về Format có thể bao gồm: * Yêu cầu trả về kết quả dưới dạng danh sách (bullet points) hoặc bảng (table). * Định dạng mã nguồn (ví dụ: JSON, Python code). * Độ dài của phản hồi (ví dụ: tối đa 50 từ). * Cấu trúc văn phong (ví dụ: trang trọng, thân thiện, hoặc dưới dạng email).",
+    "slide_context": "2020  GPT3 2026  Kimi K3 175 tỷ 2.800 tỷ một \"bác sĩ đa năng\" — mọi token đều đi qua toàn bộ khớp nối một \"bệnh viện đa khoa\" — mỗi token chỉ gọi vài chuyên gia (dense) MoE compute / dữ liệu (thang log) → ↓ ssol tset Tham số (parameter): những \"khớp nối\" model học được Sau khi luyện xong, những gì model \"biết\" nằm trong các con số cố định bên trong gọi là tham số — hãy hình dung N như khớp nối thần kinh: luyện càng kỹ, các khớp nối càng được siết đúng. O H Tham số không phải thứ bạn chỉnh khi dùng model — nó được đóng gói sẵn troTng \"bộ não\" (file weights). Bạn chỉ A chỉnh được context và các núm vặn lúc gọi (như temperature). K C A H - N O I T C A N I I A Nhiều tham số ≠ tốn hơn tuyến tính — nhờ MoE, bệnh viện lớn gấp 16 lần mà chi phí mỗi ca khám gần như không đổi Luật chơi 20202024: cứ thêm compute + dữ liệu là model khôn lên một cách dự đoán được (scaling law, Kaplan et al. 2020 MoE Shazeer et al. 2017 — arxiv.org/abs/1701.06538 · Kimi K3 16/7/2026 2.8 nghìn tỷ tham số MoE — k3-kimi.com"
+  },
+  {
+    "turn_id": "T0191",
+    "slide_id": "d1",
+    "page_num": 1,
+    "student_message": "(Trang 1, đoạn được chọn: \"heloo\") heloo",
+    "tutor_context": "Chào bạn! Mình là trợ giảng AI của khóa học này. Rất vui được đồng hành cùng bạn. Bạn có câu hỏi nào về nội dung \"Prompt Engineering và Tool Calling\" hôm nay không?",
+    "slide_context": "AI IN ACTION  Day 1 N O H T A K AI & LLM Foundation C A H Bạn đang dùng AI mỗi ngày — nhưng thực sự bên trong n-ó đang làm gì? N O I T C A N I I A"
+  },
+  {
+    "turn_id": "T0733",
+    "slide_id": "d1",
+    "page_num": 1,
+    "student_message": "(Trang 1, đoạn được chọn: \"bạn là model của hãng nào\") bạn là model của hãng nào",
+    "tutor_context": "Chào bạn! Mình là trợ giảng AI của khóa học này. Mình được thiết kế để hỗ trợ bạn học tập hiệu quả nhất với nội dung của môn học. Bạn có thắc mắc gì về bài học \"Prompt Engineering và Tool Calling\" không?",
+    "slide_context": "AI IN ACTION  Day 1 N O H T A K AI & LLM Foundation C A H Bạn đang dùng AI mỗi ngày — nhưng thực sự bên trong n-ó đang làm gì? N O I T C A N I I A"
+  },
+  {
+    "turn_id": "T0268",
+    "slide_id": "d2",
+    "page_num": 22,
+    "student_message": "(Trang 22, đoạn được chọn: \"Memory injection ■ Chỉ đưa vào facts thật sự cần cho task hiện tại ■ Ưu tiên recent history hoặc relevant history, không dump toàn bộ transcript ■ Tốt cho support agent, coding assistant, tutor nhiều lượt Compression ■ Summarize: tóm tắt phần cũ ■ Drop: bỏ hẳn phần không còn liên quan ■ Archive: đẩy\") Giải thích đoạn bôi đen ở Trang 22.",
+    "tutor_context": "Đoạn bôi đen này giới thiệu hai kỹ thuật quan trọng để tối ưu hóa context window (ngữ cảnh) khi làm việc với các mô hình ngôn ngữ lớn:  1.  **Memory Injection (Cấp dữ liệu bộ nhớ):** Đây là cách chọn lọc thông tin để đưa vào prompt thay vì gửi toàn bộ lịch sử hội thoại dài.     *   Chỉ nên đưa vào các thông tin (facts) thực sự cần thiết cho tác vụ đang xử lý.     *   Nên ưu tiên các thông tin gần đây (recent history) hoặc thông tin có liên quan trực tiếp (relevant history).     *   Kỹ thuật này rất hiệu quả cho các ứng dụng như hỗ trợ khách hàng, trợ lý lập trình hoặc gia sư AI cần duy trì hội thoại qua nhiều lượt.  2.  **Compression (Nén dữ liệu):** Dùng để xử lý khi lịch sử hội thoại trở nên quá dài. Có ba cách thực hiện:     *   **Summarize:** Tóm tắt lại nội dung cũ để giữ ý chính mà vẫn tiết kiệm không gian.     *   **Drop:** Loại bỏ hoàn toàn các phần thông tin không còn quan trọng hoặc không còn liên quan.     *   **Archive:** Di chuyển bớt các thông tin cũ sang một bộ nhớ lưu trữ ngoài thay vì để trực tiếp trong prompt [trang 22].",
+    "slide_context": "Reward function: hệ thống hiểu \"đúng / sai\" thế nào? ① Nhu cầu ② Auto / Augment ③ Reward function — PAIR Bước ③ · Case: AI gợi ý câu trả lời cho câu hỏi của 1000 học viên (khóa K3 & K4 Reward function là công thức quyết định đâu là dự đoán \"đúng\", đâu là \"sai\" — và chính nó định hình trải nghiệm người dùng cuối. Vì vậy nó phải được thiết kế liên chức năng: tối thiểu UX  Product × Engineering cùng ngồi lại. N O BỐN KẾT QUẢ CÓ THỂ XẢY RA — CASE AI GỢI Ý CÂU TRẢ LỜI H T A TP — TRUE POSITIVE · ĐÚNG-TÍCH CỰC TN — TRUE NEGATIVE · ĐÚNG-TIÊU CỰC K Câu hỏi nghẽn thật → AI gợi ý đúng câu trả lời. Học viên được giải tỏa, Câu hỏi đã có tài liệu sẵn → AI không can thiệp. Đúng — không cần C TA đỡ tải. gợi ý gì thêm. A H - N FP — FALSE POSITIVE · BÁO ĐỘNG GIẢ FN — FALSE NEGATIVE · BỎ SÓT O AI gợi ý câu trả lời SAI (hallucination) và gửi thẳng cho học viên → học Học viên đang kẹt thật nhưng AI bỏ sót, không gợi ý → học viên vẫn I T viên đi sai hướng thực hành. chờ lâu như cũ. C A N I Chi phí của FP và FN KHÔ NG đối xứng — báo cháy giả ≠ bỏ sót đám cháy. Cân nhắc đánh đổi này là quyết định then chốt khi I A thiết kế reward function. NGUỒN PAIR  Ch.1 User Needs + Defining Success REWARD · HÀM THƯỞNG DAY 02 · 57 / 83"
+  },
+  {
+    "turn_id": "T1091",
+    "slide_id": "d1",
+    "page_num": 28,
+    "student_message": "(Trang 28, đoạn được chọn: \"Bên trong Transformer: đầu ra luôn là một phân bố xác suất Với mọi ngữ cảnh, model chấm điểm MỌI từ trong từ vựng — “landˮ 22%, “forestˮ 9%… — rồi chọn theo xác su\") Giải thích đoạn bôi đen ở Trang 28: \"Bên trong Transformer: đầu ra luôn là một phân bố xác suất Với mọi ngữ cảnh, model chấm điểm MỌI từ trong từ vựng — “landˮ 22%, “forestˮ 9%… — rồi chọn theo xác su\"",
+    "tutor_context": "Đoạn trích này mô tả cơ chế đầu ra của mô hình ngôn ngữ dựa trên kiến trúc Transformer trong quá trình dự đoán từ tiếp theo.  Cụ thể, quá trình này diễn ra như sau:  1.  **Dự đoán trên toàn bộ từ vựng:** Thay vì chỉ chọn một từ duy nhất ngay lập tức, mô hình tính toán một điểm số (score) cho **tất cả** các từ có trong từ vựng của nó dựa trên ngữ cảnh đầu vào. 2.  **Phân bố xác suất:** Các điểm số này sau đó được chuyển đổi (thông qua hàm Softmax) thành một phân bố xác suất, nơi tổng xác suất của tất cả các từ bằng 100%. Ví dụ, nếu ngữ cảnh là \"The trees are in the...\", mô hình có thể gán xác suất 22% cho từ \"land\", 9% cho \"forest\", và các xác suất nhỏ hơn cho những từ khác. 3.  **Lựa chọn từ:** Cuối cùng, mô hình sẽ chọn từ tiếp theo để hiển thị dựa trên các xác suất này (có thể chọn từ có xác suất cao nhất hoặc lấy mẫu ngẫu nhiên dựa trên phân bố đó để tăng tính sáng tạo) [trang 28].  Tóm lại, bản chất của Transformer là luôn xem xét toàn bộ kho từ vựng và đưa ra một dự đoán mang tính xác suất thay vì một kết quả cố định cứng nhắc.",
+    "slide_context": "Giải phẫu một prompt: bốn lớp xếp chồng LỚP 1 “Lời dặn đầu caˮ: model là ai, cư xử thế «Bạn là trợ lý y khoa, trả lời System ngắn gọn, không chẩn đoán…» nào, không được làm gì instruction LỚP 2 Câu hỏi / yêu cầu của người dùng trong «Tóm tắt báo cáo Q1 giúp mình» User input lượt này LỚP 3 Tài liệu, lịch sử chat, dữ liệu tra sổ — phần «[đính kèm: bao_cao_q1.pdf — 3 Context bổ đoạn liên quan]» bày lên “bàn làm việcˮ sung LỚP 4 Dạng kết quả: gạch đầu dòng? bảng? «3 bullet + 1 rủi ro chính, tiếng Output mong Việt» JSON? dài bao nhiêu? muốn NẦHP 4  TPMORP 1 N O H T A K C A H - N O I T C A N I I A Viết rõ cả 4 lớp = đã làm tốt một nửa “prompt engineeringˮ — phần còn lại là các ngày sau"
+  }
+]

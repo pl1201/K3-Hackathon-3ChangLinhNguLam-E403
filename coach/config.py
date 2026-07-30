@@ -16,10 +16,12 @@ class Settings(BaseSettings):
     app_port: int = 8000
     llm_provider: Literal["openai", "deepseek"] = "openai"
     openai_api_key: str | None = None
-    openai_model: str = "gpt-4.1-mini"
+    openai_model: str = "gpt-4o"
+    fast_openai_model: str = "gpt-4o-mini"
     openai_embedding_model: str = "text-embedding-3-small"
     deepseek_api_key: str | None = None
     deepseek_model: str = "deepseek-chat"
+    fast_deepseek_model: str = "deepseek-chat"
     deepseek_base_url: str = "https://api.deepseek.com"
     llama_cloud_api_key: str | None = Field(default=None, env="LLAMA_CLOUD_API_KEY")
     langfuse_public_key: str | None = None
@@ -50,6 +52,10 @@ class Settings(BaseSettings):
     @property
     def llm_model(self) -> str:
         return self.deepseek_model if self.llm_provider == "deepseek" else self.openai_model
+
+    @property
+    def fast_llm_model(self) -> str:
+        return self.fast_deepseek_model if self.llm_provider == "deepseek" else self.fast_openai_model
 
     @property
     def llm_base_url(self) -> str | None:

@@ -43,6 +43,24 @@ async function request(path, options = {}) {
   return payload;
 }
 
+async function requestStream(path, options, onChunk) {
+  const res = await fetch(path, {
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `Lỗi ${res.status}`);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    onChunk(decoder.decode(value));
+  }
+}
+
 // ─── Agent UI Helpers ─────────────────────────────────────────
 const AGENT_PANELS = [
   "agent-welcome",
@@ -441,20 +459,39 @@ async function submitQuizAnswer() {
       state.correct += 1;
     } else {
       state.gaps += 1;
-      // Track errors for done screen
-      const analysis = data.error_analysis;
-      state.errorLog.push({
-        question: state.question?.question_text || "—",
-        explanation: data.explanation || "",
-        misconception: analysis?.misconception_topic || analysis?.misconception_explanation || null,
-        correctAnswer: null, // not exposed by API publicly
-      });
     }
 
     updateAgentProgress();
     updateQuizFlowHeader(data.current_question_idx ?? state.answered, data.total_questions ?? state.targetTotal);
     renderQuizResult(data);
     setAgentStatus("active", "Đang quiz");
+
+    if (!data.is_correct) {
+      const misconEl = $("#qf-misconception");
+      misconEl.classList.remove("hidden");
+      const misconText = $("#qf-misconception-text");
+      misconText.textContent = "Đang phân tích lỗi sai...";
+      
+      try {
+        let fullText = "";
+        await requestStream("/api/quiz/stream_error", {
+          method: "POST",
+          body: JSON.stringify({ session_id: state.sessionId }),
+        }, (chunk) => {
+          fullText += chunk;
+          misconText.innerHTML = fullText.replace(/\n/g, "<br>");
+        });
+        
+        state.errorLog.push({
+          question: state.question?.question_text || "—",
+          explanation: data.explanation || "",
+          misconception: fullText,
+          correctAnswer: null, 
+        });
+      } catch (err) {
+        misconText.textContent = "Lỗi phân tích: " + err.message;
+      }
+    }
   } catch (err) {
     showAgentError(err.message);
   }
@@ -481,12 +518,9 @@ function renderQuizResult(data) {
 
   $("#qf-explanation").textContent = data.explanation || "Chưa có phần giải thích.";
 
-  const analysis = data.error_analysis;
   const misconEl = $("#qf-misconception");
-  misconEl.classList.toggle("hidden", !analysis);
-  if (analysis) {
-    $("#qf-misconception-text").textContent =
-      analysis.misconception_explanation || analysis.explanation || analysis.feedback || JSON.stringify(analysis);
+  if (isCorrect) {
+    misconEl.classList.add("hidden");
   }
 
   // Nav buttons logic
@@ -649,21 +683,25 @@ async function startSummaryChat() {
   const chatMsgs = $("#summary-chat-messages");
   chatMsgs.innerHTML = "";
 
-  // Show loading bubble
-  appendChatBubble("assistant", "Đang phân tích bài học…", true);
+  const loadingBubble = appendChatBubble("assistant", "Đang phân tích bài học…", true);
 
   const lessonId = $("#lesson-id").value;
   try {
-    const data = await request("/api/summarize", {
+    const bubble = appendChatBubble("assistant", "");
+    loadingBubble.remove();
+    await requestStream("/api/summarize", {
       method: "POST",
       body: JSON.stringify({ lesson_id: lessonId }),
+    }, (chunk) => {
+      bubble.dataset.raw = (bubble.dataset.raw || "") + chunk;
+      bubble.innerHTML = bubble.dataset.raw
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n- /g, "\n• ")
+        .replace(/\n/g, "<br>");
     });
-    // Remove loading
-    chatMsgs.innerHTML = "";
-    appendChatBubble("assistant", data.content);
     setAgentStatus("active", "Trợ giảng AI");
   } catch (err) {
-    chatMsgs.innerHTML = "";
+    loadingBubble.remove();
     appendChatBubble("assistant", "Lỗi: " + err.message);
     setAgentStatus("idle", "Lỗi");
   }
@@ -676,23 +714,26 @@ async function sendSummaryMessage() {
   input.value = "";
 
   appendChatBubble("user", msg);
-  appendChatBubble("assistant", "Đang suy nghĩ…", true);
+  const loadingBubble = appendChatBubble("assistant", "Đang suy nghĩ…", true);
   setAgentStatus("busy", "Đang trả lời…");
 
   const lessonId = $("#lesson-id").value;
   try {
-    const data = await request("/api/summarize", {
+    const bubble = appendChatBubble("assistant", "");
+    loadingBubble.remove();
+    await requestStream("/api/summarize", {
       method: "POST",
       body: JSON.stringify({ lesson_id: lessonId, user_query: msg }),
+    }, (chunk) => {
+      bubble.dataset.raw = (bubble.dataset.raw || "") + chunk;
+      bubble.innerHTML = bubble.dataset.raw
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n- /g, "\n• ")
+        .replace(/\n/g, "<br>");
     });
-    // Remove loading bubble
-    const loading = $("#summary-chat-messages .chat-bubble.loading");
-    if (loading) loading.remove();
-    appendChatBubble("assistant", data.content);
     setAgentStatus("active", "Trợ giảng AI");
   } catch (err) {
-    const loading = $("#summary-chat-messages .chat-bubble.loading");
-    if (loading) loading.remove();
+    loadingBubble.remove();
     appendChatBubble("assistant", "Lỗi: " + err.message);
     setAgentStatus("idle", "Lỗi");
   }
@@ -704,7 +745,6 @@ function appendChatBubble(role, text, isLoading = false) {
   bubble.className = `chat-bubble chat-${role}${isLoading ? " loading" : ""}`;
 
   if (role === "assistant" && !isLoading) {
-    // Simple markdown-like rendering
     bubble.innerHTML = text
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/\n- /g, "\n• ")
@@ -715,6 +755,7 @@ function appendChatBubble(role, text, isLoading = false) {
 
   chatMsgs.appendChild(bubble);
   chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  return bubble;
 }
 
 // ─── Slide Decks Data for All Sources ─────────────────────────
@@ -1132,11 +1173,6 @@ $$(".source-item").forEach((item) => {
     }
 
     renderSlideDeck(key);
-
-    if (state.agentPhase !== "idle") {
-      resetAgent();
-      showToast("Nguồn học đã thay đổi. Bắt đầu lại nhé.");
-    }
   });
   item.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); item.click(); }

@@ -304,24 +304,21 @@ SLIDES_DIR = ROOT / "data" / "vlearn-pack" / "slides"
 # ─── Summarize Chat API ──────────────────────────────────────────
 from pydantic import BaseModel as PydanticBaseModel
 from typing import Optional
-
+from fastapi.responses import StreamingResponse
 
 class SummarizeRequest(PydanticBaseModel):
     lesson_id: str
     user_query: Optional[str] = None
 
-
 @app.post("/api/summarize")
-async def summarize_lesson(payload: SummarizeRequest) -> dict:
+async def summarize_lesson(payload: SummarizeRequest):
     """Summarize a lesson using AI, optionally focused on a user query."""
     settings = get_settings()
     if not settings.llm_enabled:
         raise HTTPException(status_code=503, detail="LLM not configured")
 
-    from coach.tools import SemanticSearchTool
+    from coach.compression import compressed_retrieve
     from coach.llm_client import create_openai_compatible_client
-
-    search = SemanticSearchTool()
 
     query = payload.user_query or "Tóm tắt toàn bộ nội dung chính của bài học này"
     
@@ -343,19 +340,22 @@ async def summarize_lesson(payload: SummarizeRequest) -> dict:
             print(f"Error parsing PDF: {exc}")
     else:
         try:
-            context = await run_in_threadpool(
-                lambda: search._run(query=query, top_k=6, lesson_id=payload.lesson_id)
+            context_docs = await run_in_threadpool(
+                lambda: compressed_retrieve(
+                    lesson_id=payload.lesson_id,
+                    query=query,
+                    mode="embeddings",
+                    similarity_threshold=0.3
+                )
             )
+            context = "\n".join([doc.page_content for doc in context_docs])
         except Exception:
             context = ""
 
     if not context or context.startswith("[Lỗi]"):
-        return {
-            "role": "assistant",
-            "content": "Chưa tìm thấy nội dung phù hợp cho bài học này. Vui lòng thử lại hoặc chọn bài khác.",
-        }
-
-    import openai
+        async def error_gen():
+            yield "Chưa tìm thấy nội dung phù hợp cho bài học này. Vui lòng thử lại hoặc chọn bài khác."
+        return StreamingResponse(error_gen(), media_type="text/event-stream")
 
     client = create_openai_compatible_client(settings)
 
@@ -372,22 +372,92 @@ async def summarize_lesson(payload: SummarizeRequest) -> dict:
     else:
         user_msg += "Hãy tóm tắt toàn bộ nội dung chính của bài giảng này thành các điểm trọng tâm."
 
-    try:
-        resp = await run_in_threadpool(
-            lambda: client.chat.completions.create(
-                model=settings.llm_model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_msg},
-                ],
-                temperature=0.3,
+    async def stream_generator():
+        try:
+            stream = await run_in_threadpool(
+                lambda: client.chat.completions.create(
+                    model=settings.llm_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    temperature=0.3,
+                    stream=True,
+                )
             )
-        )
-        answer = resp.choices[0].message.content
-    except Exception as exc:
-        answer = f"Đã xảy ra lỗi khi tóm tắt: {exc}"
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+        except Exception as exc:
+            yield f"Đã xảy ra lỗi khi tóm tắt: {exc}"
 
-    return {"role": "assistant", "content": answer}
+    return StreamingResponse(stream_generator(), media_type="text/event-stream")
+
+class StreamErrorRequest(PydanticBaseModel):
+    session_id: str
+
+@app.post("/api/quiz/stream_error")
+async def stream_error_analysis(payload: StreamErrorRequest):
+    settings = get_settings()
+    if not settings.llm_enabled:
+        raise HTTPException(status_code=503, detail="LLM not configured")
+
+    state = QUIZ_SESSIONS.get(payload.session_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Quiz session not found")
+        
+    quiz = _quiz_from_state(state)
+    if not quiz:
+        raise HTTPException(status_code=409, detail="Quiz session has no valid question")
+        
+    current_idx = state.get("current_question_idx", 1) - 1 # because it was incremented
+    q_idx = min(max(0, current_idx), len(quiz.questions) - 1)
+    question = quiz.questions[q_idx]
+    
+    try:
+        correct_answer = next(option.text for option in question.options if option.is_correct)
+    except StopIteration:
+        correct_answer = "Không có đáp án đúng"
+
+    user_answer_idx = state.get("user_answer_idx", -1)
+    if 0 <= user_answer_idx < len(question.options):
+        user_answer = question.options[user_answer_idx].text
+    else:
+        user_answer = "Không rõ"
+        
+    context_text = state.get("context_text", "Không có tài liệu tham khảo cụ thể.")
+    
+    from coach.llm_client import create_openai_compatible_client
+    from coach.error_analyzer import _ERROR_ANALYSIS_PROMPT
+    
+    user_prompt = _ERROR_ANALYSIS_PROMPT.format(
+        question=question.question_text,
+        correct_answer=correct_answer,
+        user_answer=user_answer,
+        context_text=context_text
+    )
+
+    client = create_openai_compatible_client(settings)
+
+    async def stream_error():
+        try:
+            stream = await run_in_threadpool(
+                lambda: client.chat.completions.create(
+                    model=settings.fast_llm_model,
+                    messages=[
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.2,
+                    stream=True,
+                )
+            )
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+        except Exception as e:
+            yield f"Lỗi phân tích: {e}"
+
+    return StreamingResponse(stream_error(), media_type="text/event-stream")
 
 
 @app.get("/api/slides/{filename}")
