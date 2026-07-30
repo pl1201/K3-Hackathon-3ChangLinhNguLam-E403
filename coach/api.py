@@ -301,6 +301,95 @@ async def submit_quiz_answer(payload: QuizAnswerRequest) -> QuizSessionResponse:
 SLIDES_DIR = ROOT / "data" / "vlearn-pack" / "slides"
 
 
+# ─── Summarize Chat API ──────────────────────────────────────────
+from pydantic import BaseModel as PydanticBaseModel
+from typing import Optional
+
+
+class SummarizeRequest(PydanticBaseModel):
+    lesson_id: str
+    user_query: Optional[str] = None
+
+
+@app.post("/api/summarize")
+async def summarize_lesson(payload: SummarizeRequest) -> dict:
+    """Summarize a lesson using AI, optionally focused on a user query."""
+    settings = get_settings()
+    if not settings.llm_enabled:
+        raise HTTPException(status_code=503, detail="LLM not configured")
+
+    from coach.tools import SemanticSearchTool
+    from coach.llm_client import create_openai_compatible_client
+
+    search = SemanticSearchTool()
+
+    query = payload.user_query or "Tóm tắt toàn bộ nội dung chính của bài học này"
+    
+    if payload.lesson_id in ("day1", "day2"):
+        filename = "d1-slide-hackathon.pdf" if payload.lesson_id == "day1" else "d2-slide-hackathon.pdf"
+        pdf_path = SLIDES_DIR / filename
+        try:
+            def extract_pdf_text(path):
+                import pypdf
+                with open(path, "rb") as f:
+                    reader = pypdf.PdfReader(f)
+                    return "\n\n".join(page.extract_text() for page in reader.pages)
+            
+            context = await run_in_threadpool(lambda: extract_pdf_text(pdf_path))
+            if len(context) > 30000:
+                context = context[:30000]
+        except Exception as exc:
+            context = ""
+            print(f"Error parsing PDF: {exc}")
+    else:
+        try:
+            context = await run_in_threadpool(
+                lambda: search._run(query=query, top_k=6, lesson_id=payload.lesson_id)
+            )
+        except Exception:
+            context = ""
+
+    if not context or context.startswith("[Lỗi]"):
+        return {
+            "role": "assistant",
+            "content": "Chưa tìm thấy nội dung phù hợp cho bài học này. Vui lòng thử lại hoặc chọn bài khác.",
+        }
+
+    import openai
+
+    client = create_openai_compatible_client(settings)
+
+    system_prompt = (
+        "Bạn là một Trợ giảng AI thông minh. "
+        "Nhiệm vụ của bạn là tóm tắt nội dung bài giảng một cách ngắn gọn, rõ ràng, dễ hiểu. "
+        "Trả lời bằng tiếng Việt, dùng markdown formatting (bold, bullets). "
+        "Chỉ dựa trên nội dung được cung cấp, không bịa thêm thông tin."
+    )
+
+    user_msg = f"Dựa trên nội dung bài giảng sau:\n\n{context}\n\n"
+    if payload.user_query:
+        user_msg += f"Yêu cầu của học viên: {payload.user_query}"
+    else:
+        user_msg += "Hãy tóm tắt toàn bộ nội dung chính của bài giảng này thành các điểm trọng tâm."
+
+    try:
+        resp = await run_in_threadpool(
+            lambda: client.chat.completions.create(
+                model=settings.llm_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_msg},
+                ],
+                temperature=0.3,
+            )
+        )
+        answer = resp.choices[0].message.content
+    except Exception as exc:
+        answer = f"Đã xảy ra lỗi khi tóm tắt: {exc}"
+
+    return {"role": "assistant", "content": answer}
+
+
 @app.get("/api/slides/{filename}")
 def get_pdf_slide(filename: str) -> FileResponse:
     file_path = (SLIDES_DIR / filename).resolve()

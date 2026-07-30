@@ -1,0 +1,3 @@
+Error parsing PDF: No module named 'pypdf'
+DEBUG: context len=0 for day1
+DEBUG: context len=16403 for day1
