@@ -5,11 +5,11 @@ Analyzes a user's incorrect answer to deduce their knowledge gap.
 
 import logging
 from typing import Optional
-from openai import OpenAI
 import instructor
 
-from coach.schemas_error_analysis import ErrorAnalysisResult
 from coach.config import get_settings
+from coach.llm_client import create_openai_compatible_client
+from coach.schemas_error_analysis import ErrorAnalysisResult
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +48,12 @@ def analyze_user_error(
         An ErrorAnalysisResult object.
     """
     settings = get_settings()
-    if not settings.openai_api_key:
-        raise RuntimeError("OPENAI_API_KEY is required for error analysis")
+    if not settings.llm_enabled:
+        raise RuntimeError(
+            f"API key for LLM_PROVIDER={settings.llm_provider} is required for error analysis"
+        )
 
-    client = instructor.from_openai(OpenAI(api_key=settings.openai_api_key))
+    client = instructor.from_openai(create_openai_compatible_client(settings))
 
     user_prompt = _ERROR_ANALYSIS_PROMPT.format(
         question=question,
@@ -62,7 +64,7 @@ def analyze_user_error(
 
     try:
         analysis = client.chat.completions.create(
-            model=settings.openai_model,
+            model=settings.llm_model,
             response_model=ErrorAnalysisResult,
             messages=[
                 {"role": "user", "content": user_prompt}

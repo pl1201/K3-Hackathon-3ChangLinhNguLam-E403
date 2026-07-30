@@ -8,9 +8,9 @@ import logging
 from typing import Optional
 
 import instructor
-from openai import OpenAI
 
 from coach.config import get_settings
+from coach.llm_client import create_openai_compatible_client
 from coach.schemas_quiz import StructuredSummary
 
 logger = logging.getLogger(__name__)
@@ -36,16 +36,18 @@ def summarize_to_facts(text: str, max_retries: int = 3) -> StructuredSummary:
         A validated StructuredSummary object.
     """
     settings = get_settings()
-    if not settings.openai_api_key:
-        raise RuntimeError("OPENAI_API_KEY is required for structured summarization")
+    if not settings.llm_enabled:
+        raise RuntimeError(
+            f"API key for LLM_PROVIDER={settings.llm_provider} is required for structured summarization"
+        )
 
     # Patch the standard OpenAI client with instructor
     # instructor adds the `response_model` argument to chat.completions.create
-    client = instructor.from_openai(OpenAI(api_key=settings.openai_api_key))
+    client = instructor.from_openai(create_openai_compatible_client(settings))
 
     try:
         summary: StructuredSummary = client.chat.completions.create(
-            model=settings.openai_model,
+            model=settings.llm_model,
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": f"Hãy phân rã nội dung sau:\n\n{text}"},

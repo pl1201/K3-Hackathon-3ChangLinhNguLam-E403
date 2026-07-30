@@ -12,6 +12,9 @@ from typing import Optional
 from coach.config import get_settings
 
 logger = logging.getLogger(__name__)
+ROOT = Path(__file__).resolve().parents[1]
+ALLOWED_DOCUMENT_ROOT = (ROOT / "data").resolve()
+ALLOWED_EXTENSIONS = {".pdf", ".pptx"}
 
 
 def parse_document_to_markdown(file_path: str, use_cache: bool = True) -> str:
@@ -30,11 +33,18 @@ def parse_document_to_markdown(file_path: str, use_cache: bool = True) -> str:
         raise RuntimeError("LLAMA_CLOUD_API_KEY is required for Visual Summarization")
 
     path = Path(file_path)
+    if not path.is_absolute():
+        path = ROOT / path
+    path = path.resolve()
+    if path != ALLOWED_DOCUMENT_ROOT and ALLOWED_DOCUMENT_ROOT not in path.parents:
+        raise ValueError("Document must be located inside the project data directory")
+    if path.suffix.lower() not in ALLOWED_EXTENSIONS:
+        raise ValueError("Only PDF and PPTX documents are supported")
     if not path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 
     # Check cache first
-    cache_dir = Path("data/parsed_cache")
+    cache_dir = ALLOWED_DOCUMENT_ROOT / "parsed_cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
     cache_file = cache_dir / f"{path.stem}_parsed.md"
 

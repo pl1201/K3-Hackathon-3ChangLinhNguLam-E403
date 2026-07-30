@@ -369,12 +369,14 @@ class QuizGeneratorInput(BaseModel):
         description="Đoạn văn bản, JSON tóm tắt, hoặc thông tin để dựa vào đó sinh câu hỏi Quiz.",
     )
     num_questions: int = Field(
-        default=3,
-        description="Số lượng câu hỏi cần sinh ra.",
+        default=20,
+        ge=1,
+        le=25,
+        description="Số lượng câu hỏi cần sinh ra (mặc định 20, tối đa 25).",
     )
-    bloom_level: str = Field(
-        default="remember",
-        description="Mức độ Bloom: 'remember' (Nhận biết), 'understand' (Thông hiểu), 'apply' (Vận dụng tình huống).",
+    bloom_level: Literal["remember", "understand", "apply", "analyze", "evaluate"] = Field(
+        default="analyze",
+        description="Mức độ Bloom: 'remember' (Nhận biết), 'understand' (Thông hiểu), 'apply' (Vận dụng), 'analyze' (Phân tích), 'evaluate' (Vận dụng cao).",
     )
     use_yake: bool = Field(
         default=False,

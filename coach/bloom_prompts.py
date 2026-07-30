@@ -39,6 +39,28 @@ Nội dung kiến thức:
 Hãy tạo ra {num_questions} câu hỏi trắc nghiệm ở mức độ VẬN DỤNG bằng cách đưa ra các tình huống.
 """
 
+# 4. Level: Analyze (Phân tích)
+_BLOOM_ANALYZE_TEMPLATE = """
+Mức độ: PHÂN TÍCH (Analyze) - Yêu cầu học viên phân tách thông tin thành các thành phần, tìm mối liên hệ hoặc cấu trúc.
+Ví dụ: "Tại sao thuật toán X lại hiệu quả hơn Y trong trường hợp này?", "Hãy xác định lỗi logic trong đoạn code sau."
+
+Nội dung kiến thức:
+{context_text}
+
+Hãy tạo ra {num_questions} câu hỏi trắc nghiệm ở mức độ PHÂN TÍCH.
+"""
+
+# 5. Level: Evaluate (Đánh giá)
+_BLOOM_EVALUATE_TEMPLATE = """
+Mức độ: ĐÁNH GIÁ (Evaluate) - Yêu cầu học viên đưa ra quyết định, phán đoán hoặc lập luận bảo vệ quan điểm.
+Ví dụ: "Đánh giá ưu nhược điểm của công nghệ X so với công nghệ Y trong dự án lớn.", "Tại sao giải pháp A lại phù hợp hơn giải pháp B trong bối cảnh này?"
+
+Nội dung kiến thức:
+{context_text}
+
+Hãy tạo ra {num_questions} câu hỏi trắc nghiệm ở mức độ ĐÁNH GIÁ.
+"""
+
 
 def get_bloom_prompt(level: str) -> PromptTemplate:
     """Get the appropriate PromptTemplate for a Bloom's Taxonomy level."""
@@ -50,6 +72,10 @@ def get_bloom_prompt(level: str) -> PromptTemplate:
         template = _BLOOM_UNDERSTAND_TEMPLATE
     elif level in ["apply", "vận dụng"]:
         template = _BLOOM_APPLY_TEMPLATE
+    elif level in ["analyze", "phân tích"]:
+        template = _BLOOM_ANALYZE_TEMPLATE
+    elif level in ["evaluate", "đánh giá"]:
+        template = _BLOOM_EVALUATE_TEMPLATE
     else:
         # Fallback to standard generation
         template = (

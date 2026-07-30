@@ -5,12 +5,12 @@ OpenAI's structured outputs via Instructor.
 """
 
 import logging
-from openai import OpenAI
 import instructor
 from pydantic import BaseModel
 
-from coach.schemas_eval import EvaluationResult
 from coach.config import get_settings
+from coach.llm_client import create_openai_compatible_client
+from coach.schemas_eval import EvaluationResult
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +48,12 @@ def evaluate_quiz_question(
         An EvaluationResult object containing scores and reasoning.
     """
     settings = get_settings()
-    if not settings.openai_api_key:
-        raise RuntimeError("OPENAI_API_KEY is required for evaluation")
+    if not settings.llm_enabled:
+        raise RuntimeError(
+            f"API key for LLM_PROVIDER={settings.llm_provider} is required for evaluation"
+        )
 
-    client = instructor.from_openai(OpenAI(api_key=settings.openai_api_key))
+    client = instructor.from_openai(create_openai_compatible_client(settings))
 
     user_prompt = _EVAL_SYSTEM_PROMPT.format(
         context_text=context_text,
@@ -61,7 +63,7 @@ def evaluate_quiz_question(
 
     try:
         evaluation = client.chat.completions.create(
-            model=settings.openai_model,
+            model=settings.llm_model,
             response_model=EvaluationResult,
             messages=[
                 {"role": "user", "content": user_prompt}

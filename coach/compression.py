@@ -122,13 +122,16 @@ def compress_by_llm(
         Documents with content reduced to only relevant sentences.
     """
     settings = get_settings()
-    if not settings.openai_api_key:
-        raise RuntimeError("OPENAI_API_KEY is required for LLM compression")
+    if not settings.llm_enabled:
+        raise RuntimeError(
+            f"API key for LLM_PROVIDER={settings.llm_provider} is required for LLM compression"
+        )
 
     llm = ChatOpenAI(
-        model=settings.openai_model,
+        model=settings.llm_model,
         temperature=0,
-        api_key=settings.openai_api_key,
+        api_key=settings.llm_api_key,
+        base_url=settings.llm_base_url,
         max_tokens=500,
     )
 
