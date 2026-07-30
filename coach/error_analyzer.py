@@ -64,7 +64,7 @@ def analyze_user_error(
 
     try:
         analysis = client.chat.completions.create(
-            model=settings.llm_model,
+            model=settings.fast_llm_model,
             response_model=ErrorAnalysisResult,
             messages=[
                 {"role": "user", "content": user_prompt}

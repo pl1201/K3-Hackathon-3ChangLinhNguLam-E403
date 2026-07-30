@@ -63,7 +63,7 @@ def evaluate_quiz_question(
 
     try:
         evaluation = client.chat.completions.create(
-            model=settings.llm_model,
+            model=settings.fast_llm_model,
             response_model=EvaluationResult,
             messages=[
                 {"role": "user", "content": user_prompt}

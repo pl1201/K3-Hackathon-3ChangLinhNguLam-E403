@@ -10,6 +10,7 @@ from typing import Literal, TypedDict
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
+from coach.compression import compressed_retrieve
 from coach.schemas_quiz import QuizModel
 from coach.tools import ErrorAnalysisTool, QuizEvaluatorTool, QuizGeneratorTool, SemanticSearchTool
 
@@ -53,11 +54,25 @@ def _validated_quiz(state: QuizState) -> QuizModel:
 def retrieve_context(state: QuizState) -> QuizState:
     if state.get("context_text"):
         return {}
-    context = search_tool._run(
-        query=state.get("topic_query", "Kiến thức tổng hợp"),
-        lesson_id=state.get("lesson_id", "transcript-06-clean"),
-        top_k=6,
-    )
+    
+    lesson_id = state.get("lesson_id", "transcript-06-clean")
+    query = state.get("topic_query", "Kiến thức tổng hợp")
+    
+    try:
+        context_docs = compressed_retrieve(
+            lesson_id=lesson_id,
+            query=query,
+            mode="embeddings",
+            similarity_threshold=0.3
+        )
+        context = "\n".join([doc.page_content for doc in context_docs])
+    except Exception as exc:
+        logger.warning(f"compressed_retrieve failed: {exc}")
+        context = ""
+
+    if not context:
+        context = search_tool._run(query=query, lesson_id=lesson_id, top_k=6)
+        
     return {"context_text": context, "phase": "generating"}
 
 
@@ -133,9 +148,16 @@ def analyze_error(state: QuizState) -> QuizState:
         question=question.question_text,
         correct_answer=correct_answer,
         user_answer=user_answer,
-        context_text=state["context_text"],
+        context_text=state.get("context_text", ""),
     )
-    return {"error_analysis_json": analysis, "phase": "generating"}
+    
+    next_idx = current_idx + 1
+    if next_idx >= len(quiz.questions):
+        phase = "completed"
+    else:
+        phase = "waiting_for_answer"
+        
+    return {"error_analysis_json": analysis, "phase": phase, "current_question_idx": next_idx}
 
 
 def route_start(state: QuizState) -> str:
@@ -147,7 +169,9 @@ def route_evaluation(state: QuizState) -> str:
 
 
 def route_answer(state: QuizState) -> str:
-    return END if state["phase"] == "completed" else "analyze_error"
+    if state["phase"] in ["completed", "waiting_for_answer"]:
+        return END
+    return "analyze_error"
 
 
 builder = StateGraph(QuizState)
@@ -173,6 +197,6 @@ builder.add_conditional_edges(
     route_answer,
     {"analyze_error": "analyze_error", END: END},
 )
-builder.add_edge("analyze_error", "generate_quiz")
+builder.add_edge("analyze_error", END)
 
 quiz_graph = builder.compile(checkpointer=InMemorySaver())
