@@ -3,147 +3,372 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Active Recall Coach giúp học viên phát hiện lỗ hổng kiến thức dựa trên transcript VLearn.">
-  <title>Active Recall Coach · VLearn</title>
+  <meta name="description" content="VLearn Study Studio — học tập thông minh từ bài giảng với AI Coach.">
+  <meta name="theme-color" content="#edf4ff">
+  <title>VLearn Study Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="/" aria-label="VLearn Active Recall">
-      <span class="brand-mark">V</span>
-      <span>VLearn <strong>Recall</strong></span>
+  <a class="skip-link" href="#workspace">Đi đến nội dung chính</a>
+
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="VLearn Study Studio">
+      <span class="brand-orbit" aria-hidden="true"><i></i><i></i><b>V</b></span>
+      <span><strong>VLearn</strong><small>Study Studio</small></span>
     </a>
-    <div class="topbar-actions">
-      <span id="runtime-badge" class="badge neutral">Đang kiểm tra hệ thống</span>
-      <button id="reset-session" class="button ghost" type="button">Phiên mới</button>
+    <div class="notebook-title">
+      <span class="document-icon" aria-hidden="true">▤</span>
+      <div><b>AI Foundation · Study notebook</b><small id="save-status">Đã lưu tự động</small></div>
+    </div>
+    <div class="header-actions">
+      <span id="runtime-badge" class="runtime-badge checking">Đang kết nối</span>
+      <button id="reset-session" class="new-session" type="button">+ Phiên mới</button>
     </div>
   </header>
 
-  <main class="shell">
-    <section class="hero">
-      <div>
-        <p class="eyebrow">ACTIVE RECALL · FOUNDATION</p>
-        <h1>Đừng chỉ đọc lại.<br><span>Hãy kiểm tra điều bạn thực sự hiểu.</span></h1>
+  <main id="workspace" class="workspace">
+
+    <!-- ===== LEFT: Source Library (no checkboxes) ===== -->
+    <aside class="sources-pane pane">
+      <div class="pane-header">
+        <div><p class="overline">THƯ VIỆN</p><h1>Nguồn học</h1></div>
+        <button id="collapse-sources" class="icon-button" type="button" aria-label="Thu gọn nguồn">‹</button>
       </div>
-      <div class="progress-card" aria-label="Tiến độ phiên học">
-        <div class="progress-meta">
-          <span>Tiến độ phiên</span>
-          <strong id="progress-value">0%</strong>
+
+      <label class="source-search">
+        <span aria-hidden="true">⌕</span>
+        <input id="source-filter" type="search" placeholder="Tìm trong nguồn…" autocomplete="off">
+      </label>
+
+      <div id="source-list" class="source-list">
+        <section class="source-group">
+          <h2>Bài giảng</h2>
+          <div class="source-item active" data-search="transcript 06 transformer attention" data-id="transcript-06-clean" tabindex="0" role="button" aria-pressed="true">
+            <span class="source-type transcript">T</span>
+            <span><b>Transformer &amp; Attention</b><small>Transcript 06 · 162 đoạn</small></span>
+            <i class="src-active-dot"></i>
+          </div>
+          <div class="source-item" data-search="transcript 04 llm foundation" data-id="transcript-04-clean" tabindex="0" role="button" aria-pressed="false">
+            <span class="source-type transcript">T</span>
+            <span><b>LLM hoạt động thế nào</b><small>Transcript 04 · 98 đoạn</small></span>
+            <i class="src-active-dot"></i>
+          </div>
+          <div class="source-item" data-search="transcript 01 bài toán kinh doanh" data-id="transcript-01-clean" tabindex="0" role="button" aria-pressed="false">
+            <span class="source-type transcript">T</span>
+            <span><b>Bài toán kinh doanh AI</b><small>Transcript 01 · 89 đoạn</small></span>
+            <i class="src-active-dot"></i>
+          </div>
+          <div class="source-item" data-search="transcript 02 chỉ số thành công" data-id="transcript-02-clean" tabindex="0" role="button" aria-pressed="false">
+            <span class="source-type transcript">T</span>
+            <span><b>Chỉ số thành công</b><small>Transcript 02 · 43 đoạn</small></span>
+            <i class="src-active-dot"></i>
+          </div>
+          <div class="source-item" data-search="transcript 03 tự động hóa ràng buộc" data-id="transcript-03-clean" tabindex="0" role="button" aria-pressed="false">
+            <span class="source-type transcript">T</span>
+            <span><b>Tự động hóa &amp; ràng buộc</b><small>Transcript 03 · 154 đoạn</small></span>
+            <i class="src-active-dot"></i>
+          </div>
+          <div class="source-item" data-search="transcript 05 đánh giá dữ liệu" data-id="transcript-05-clean" tabindex="0" role="button" aria-pressed="false">
+            <span class="source-type transcript">T</span>
+            <span><b>Đánh giá &amp; dữ liệu</b><small>Transcript 05 · 154 đoạn</small></span>
+            <i class="src-active-dot"></i>
+          </div>
+        </section>
+        <section class="source-group">
+          <h2>Slide</h2>
+          <div class="source-item source-slide" data-search="slide day 1 pdf" data-slide="day1" tabindex="0" role="button" aria-pressed="false">
+            <span class="source-type pdf">PDF</span>
+            <span><b>Day 1 Hackathon</b><small>12 slides</small></span>
+            <i class="src-active-dot"></i>
+          </div>
+          <div class="source-item source-slide" data-search="slide day 2 pdf" data-slide="day2" tabindex="0" role="button" aria-pressed="false">
+            <span class="source-type pdf">PDF</span>
+            <span><b>Day 2 Hackathon</b><small>18 slides</small></span>
+            <i class="src-active-dot"></i>
+          </div>
+        </section>
+      </div>
+
+      <div class="source-footnote"><span>ⓘ</span> Chọn nguồn để xem slide và học với AI Coach.</div>
+    </aside>
+
+    <!-- ===== CENTER: Slide Viewer ===== -->
+    <section class="main-pane" id="slide-pane">
+      <!-- Slide toolbar -->
+      <div class="slide-toolbar">
+        <div class="slide-info">
+          <span class="slide-source-label" id="slide-source-label">Transformer &amp; Attention</span>
+          <span class="slide-counter"><span id="slide-current">1</span> / <span id="slide-total">6</span></span>
         </div>
-        <div class="progress-track"><span id="progress-bar"></span></div>
-        <p id="phase-label">Sẵn sàng bắt đầu</p>
+        <div class="slide-nav-controls">
+          <button id="slide-prev" class="slide-nav-btn" type="button" aria-label="Slide trước" disabled>‹</button>
+          <button id="slide-next" class="slide-nav-btn" type="button" aria-label="Slide tiếp theo">›</button>
+        </div>
+      </div>
+
+      <!-- Slide stage -->
+      <div class="slide-stage" id="slide-stage">
+        <div class="slide-track" id="slide-track">
+          <!-- Slide 1 -->
+          <div class="slide-card active" data-slide-index="0">
+            <div class="slide-inner slide-hero">
+              <div class="slide-badge">Bài 06</div>
+              <h2>Transformer &amp; Attention Mechanism</h2>
+              <p>Kiến trúc nền tảng của các mô hình ngôn ngữ lớn hiện đại</p>
+              <div class="slide-tags"><span>Self-Attention</span><span>Multi-Head</span><span>Positional Encoding</span></div>
+            </div>
+          </div>
+          <!-- Slide 2 -->
+          <div class="slide-card" data-slide-index="1">
+            <div class="slide-inner">
+              <p class="slide-overline">PHẦN 1</p>
+              <h3>Vấn đề với RNN</h3>
+              <ul class="slide-bullets">
+                <li><strong>Vanishing gradient</strong> — gradient biến mất khi chuỗi dài</li>
+                <li><strong>Xử lý tuần tự</strong> — không thể song song hóa</li>
+                <li><strong>Long-range dependency</strong> — khó ghi nhớ ngữ cảnh xa</li>
+              </ul>
+              <div class="slide-note">💡 Transformer giải quyết cả 3 vấn đề này với cơ chế Attention</div>
+            </div>
+          </div>
+          <!-- Slide 3 -->
+          <div class="slide-card" data-slide-index="2">
+            <div class="slide-inner">
+              <p class="slide-overline">PHẦN 2</p>
+              <h3>Self-Attention là gì?</h3>
+              <div class="slide-diagram">
+                <div class="diag-row">
+                  <div class="diag-box q">Q<small>Query</small></div>
+                  <div class="diag-box k">K<small>Key</small></div>
+                  <div class="diag-box v">V<small>Value</small></div>
+                </div>
+                <div class="diag-formula">Attention(Q,K,V) = softmax(QK<sup>T</sup>/√d<sub>k</sub>)·V</div>
+              </div>
+              <p class="slide-caption">Mỗi token "nhìn" vào tất cả token khác để tính trọng số tập trung</p>
+            </div>
+          </div>
+          <!-- Slide 4 -->
+          <div class="slide-card" data-slide-index="3">
+            <div class="slide-inner">
+              <p class="slide-overline">PHẦN 3</p>
+              <h3>Multi-Head Attention</h3>
+              <div class="slide-heads-grid">
+                <div class="head-item"><span>Head 1</span><small>Ngữ pháp</small></div>
+                <div class="head-item"><span>Head 2</span><small>Ngữ nghĩa</small></div>
+                <div class="head-item"><span>Head 3</span><small>Tham chiếu</small></div>
+                <div class="head-item head-more">+5 heads</div>
+              </div>
+              <p class="slide-caption">8 đầu attention song song → nắm bắt nhiều loại quan hệ trong văn bản</p>
+            </div>
+          </div>
+          <!-- Slide 5 -->
+          <div class="slide-card" data-slide-index="4">
+            <div class="slide-inner">
+              <p class="slide-overline">PHẦN 4</p>
+              <h3>Positional Encoding</h3>
+              <ul class="slide-bullets">
+                <li>Transformer không có thứ tự vốn có — cần thêm thông tin vị trí</li>
+                <li>Dùng hàm sin/cos tần số khác nhau cho từng chiều</li>
+                <li>Cho phép model suy luận về thứ tự và khoảng cách</li>
+              </ul>
+              <div class="slide-note">🔢 PE(pos, 2i) = sin(pos/10000<sup>2i/d</sup>)</div>
+            </div>
+          </div>
+          <!-- Slide 6 -->
+          <div class="slide-card" data-slide-index="5">
+            <div class="slide-inner slide-summary-slide">
+              <p class="slide-overline">TÓM TẮT</p>
+              <h3>Kiến trúc Transformer</h3>
+              <div class="arch-steps">
+                <div class="arch-step">Input Embedding + Positional Encoding</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-step">Multi-Head Self-Attention (×N)</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-step">Feed Forward + Layer Norm</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-step">Output &amp; Softmax</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide dots -->
+      <div class="slide-dots" id="slide-dots">
+        <button class="dot active" data-idx="0" type="button" aria-label="Slide 1"></button>
+        <button class="dot" data-idx="1" type="button" aria-label="Slide 2"></button>
+        <button class="dot" data-idx="2" type="button" aria-label="Slide 3"></button>
+        <button class="dot" data-idx="3" type="button" aria-label="Slide 4"></button>
+        <button class="dot" data-idx="4" type="button" aria-label="Slide 5"></button>
+        <button class="dot" data-idx="5" type="button" aria-label="Slide 6"></button>
       </div>
     </section>
 
-    <section class="workspace">
-      <aside class="source-panel panel">
-        <div class="panel-heading">
+    <!-- ===== RIGHT: Agent Panel ===== -->
+    <aside class="agent-pane pane" id="agent-pane">
+      <div class="pane-header agent-header">
+        <div class="agent-identity">
+          <div class="agent-avatar" aria-hidden="true">
+            <span class="agent-pulse"></span>
+            <span class="agent-icon">✦</span>
+          </div>
           <div>
-            <p class="kicker">NGUỒN HỌC</p>
-            <h2>Transformer & Attention</h2>
+            <p class="overline">AI COACH</p>
+            <h1>Study Agent</h1>
           </div>
-          <span class="source-chip">Transcript 06</span>
         </div>
-        <p class="scope-note">Coach chỉ đánh giá dựa trên nội dung bài học. Nếu thiếu căn cứ, hệ thống sẽ nói rõ thay vì đoán.</p>
-        <nav class="lesson-outline" aria-label="Mục lục bài học">
-          <button class="outline-item active" type="button">
-            <span>01</span>
-            <span><strong>Các nhóm AI</strong><small>Discriminative · Generative</small></span>
+        <div class="agent-status-chip" id="agent-status-chip">
+          <span class="status-dot"></span>
+          <span id="agent-status-label">Sẵn sàng</span>
+        </div>
+      </div>
+
+      <!-- Agent thinking / stream area -->
+      <div class="agent-stream" id="agent-stream">
+        <!-- Welcome state -->
+        <div class="agent-welcome" id="agent-welcome">
+          <div class="welcome-illustration" aria-hidden="true">
+            <div class="welcome-orb"></div>
+          </div>
+          <p class="welcome-msg">Tôi sẽ tóm tắt nội dung bài học và dẫn dắt bạn qua chuỗi câu hỏi có mục tiêu.</p>
+          <button id="agent-start-btn" class="agent-action-btn" type="button">
+            <span>▶</span> Bắt đầu học với AI
           </button>
-          <button class="outline-item" type="button">
-            <span>02</span>
-            <span><strong>Transformer</strong><small>Bước ngoặt kiến trúc</small></span>
+        </div>
+
+        <!-- Thinking / loading state -->
+        <div class="agent-thinking hidden" id="agent-thinking">
+          <div class="thinking-dots"><span></span><span></span><span></span></div>
+          <p id="agent-thinking-text">Đang phân tích bài học…</p>
+          <div class="agent-progress-steps" id="agent-progress-steps">
+            <div class="ap-step" id="ap-read"><div class="ap-icon">📖</div><span>Đọc bài</span><em>Đang chạy</em></div>
+            <div class="ap-step" id="ap-summarize"><div class="ap-icon">📝</div><span>Tóm tắt</span><em>Chờ</em></div>
+            <div class="ap-step" id="ap-quiz"><div class="ap-icon">❓</div><span>Soạn quiz</span><em>Chờ</em></div>
+          </div>
+        </div>
+
+        <!-- Summary state -->
+        <div class="agent-summary hidden" id="agent-summary">
+          <div class="summary-header">
+            <span class="summary-tag">TÓM TẮT BÀI HỌC</span>
+            <button class="summary-refresh" id="summary-refresh" type="button" title="Tóm tắt lại">↻</button>
+          </div>
+          <div class="summary-body" id="summary-body">
+            <!-- filled by JS -->
+          </div>
+          <button class="agent-action-btn start-quiz-btn" id="agent-quiz-start" type="button">
+            <span>✓</span> Bắt đầu Quiz ngay
           </button>
-          <button class="outline-item" type="button">
-            <span>03</span>
-            <span><strong>Attention</strong><small>Cơ chế tập trung ngữ cảnh</small></span>
+        </div>
+
+        <!-- Topic Selection -->
+        <div class="agent-topic-select hidden" id="agent-topic-select">
+          <div class="topic-select-header">
+            <span class="topic-select-tag">🎯 CHỌN CHỦ ĐỀ ÔN TẬP</span>
+            <p class="topic-select-desc">Bạn muốn quiz về phần kiến thức nào? Chọn một chủ đề hoặc để Agent tự quyết định.</p>
+          </div>
+          <div class="topic-chips" id="topic-chips">
+            <!-- filled by JS based on lesson -->
+          </div>
+          <div class="topic-custom-wrap">
+            <label for="topic-custom-input" class="topic-custom-label">Hoặc nhập chủ đề cụ thể:</label>
+            <input id="topic-custom-input" class="topic-custom-input" type="text"
+              placeholder="VD: cơ chế Self-Attention, Positional Encoding…"
+              maxlength="200" autocomplete="off">
+          </div>
+          <div class="topic-bloom-wrap">
+            <label class="topic-bloom-label">Mức độ câu hỏi:</label>
+            <div class="bloom-chips" role="radiogroup" aria-label="Mức độ Bloom">
+              <button class="bloom-chip" data-level="understand" type="button">Thông hiểu</button>
+              <button class="bloom-chip active" data-level="analyze" type="button">Phân tích ✦</button>
+              <button class="bloom-chip" data-level="evaluate" type="button">Vận dụng cao</button>
+            </div>
+          </div>
+          <button class="agent-action-btn" id="topic-confirm-btn" type="button">
+            <span>▶</span> Tạo bộ Quiz 20 câu
           </button>
-        </nav>
-        <article id="source-card" class="source-card">
-          <div class="source-id">T06-051</div>
-          <p>Discriminative AI dùng để phân loại, dự đoán. Generative AI nhận prompt và trả về nội dung.</p>
-        </article>
-      </aside>
-
-      <section class="coach-panel panel" aria-live="polite">
-        <div class="coach-header">
-          <div class="coach-identity">
-            <span class="coach-avatar">AR</span>
-            <div><strong>Recall Coach</strong><small id="coach-status">Sẵn sàng</small></div>
-          </div>
-          <span class="grounded-label"><span></span>Bám nguồn</span>
         </div>
 
-        <div id="empty-state" class="empty-state">
-          <div class="orb">✦</div>
-          <p class="kicker">PHIÊN ÔN TẬP CÓ HƯỚNG DẪN</p>
-          <h2>Một câu hỏi. Một câu trả lời.<br>Một lỗ hổng được làm rõ.</h2>
-          <p>Coach sẽ tạo câu hỏi từ transcript, đọc câu trả lời của bạn và dẫn sang bước phù hợp.</p>
-          <button id="start-session" class="button primary" type="button">
-            Bắt đầu kiểm tra <span>→</span>
-          </button>
-          <small>Khoảng 3–5 phút · Không tính điểm chính thức</small>
-        </div>
-
-        <div id="learning-state" class="learning-state hidden">
-          <div class="step-row">
-            <span id="step-chip" class="step-chip">CÂU 1</span>
-            <span id="difficulty-chip" class="difficulty-chip">Nền tảng</span>
+        <!-- Quiz flow -->
+        <div class="agent-quiz-flow hidden" id="agent-quiz-flow">
+          <!-- Question card -->
+          <div class="quiz-flow-header">
+            <span class="quiz-flow-label" id="qf-label">CÂU 1 / 5</span>
+            <div class="qf-metrics">
+              <span id="qf-correct">0 ✓</span>
+              <span id="qf-gaps">0 ↗</span>
+            </div>
           </div>
-          <h2 id="question-text">Đang tạo câu hỏi…</h2>
-          <p class="answer-hint">Trả lời bằng lời của bạn. Không cần giống nguyên văn bài giảng.</p>
-          <label class="answer-box">
-            <span class="sr-only">Câu trả lời của bạn</span>
-            <textarea id="answer-input" rows="6" maxlength="4000" placeholder="Mình hiểu rằng…"></textarea>
-            <span class="answer-meta"><span id="char-count">0</span>/4000</span>
-          </label>
-          <div class="action-row">
-            <button id="submit-answer" class="button primary" type="button">Kiểm tra câu trả lời</button>
-            <button id="show-source" class="button ghost" type="button">Xem đoạn nguồn</button>
+          <div class="qf-question-card" id="qf-question-card">
+            <p id="qf-question-text"></p>
+          </div>
+          <div class="qf-options" id="qf-options" role="radiogroup" aria-label="Đáp án">
+            <!-- options rendered by JS -->
+          </div>
+          <div class="qf-actions">
+            <button class="agent-submit-btn" id="qf-submit" type="button" disabled>Chọn đáp án →</button>
+          </div>
+
+          <!-- Result inline -->
+          <div class="qf-result hidden" id="qf-result">
+            <div class="qf-result-mark" id="qf-result-mark"></div>
+            <p class="qf-result-title" id="qf-result-title"></p>
+            <div class="qf-explanation" id="qf-explanation"></div>
+            <div class="qf-misconception hidden" id="qf-misconception">
+              <span>Điểm cần làm rõ</span>
+              <p id="qf-misconception-text"></p>
+            </div>
+            <div class="qf-nav-btns">
+              <button class="qf-next-btn hidden" id="qf-next" type="button">Câu tiếp →</button>
+              <button class="qf-reinforce-btn hidden" id="qf-reinforce" type="button">Củng cố →</button>
+              <button class="qf-restart-btn" id="qf-restart" type="button">Làm lại</button>
+            </div>
           </div>
         </div>
 
-        <div id="result-state" class="result-state hidden">
-          <div id="result-icon" class="result-icon">✓</div>
-          <p id="result-label" class="kicker">ĐÃ ĐÁNH GIÁ</p>
-          <h2 id="result-title">Bạn đã nắm đúng ý chính.</h2>
-          <p id="feedback-text"></p>
-          <div id="gap-list" class="gap-list hidden"></div>
-          <blockquote id="evidence-card" class="evidence-card hidden">
-            <span id="evidence-id"></span>
-            <p id="evidence-quote"></p>
-          </blockquote>
-          <div class="action-row">
-            <button id="try-again" class="button primary" type="button">Trả lời lại</button>
-            <button id="restart" class="button ghost" type="button">Kết thúc phiên</button>
+        <!-- Done state -->
+        <div class="agent-done hidden" id="agent-done">
+          <div class="done-mark">🎉</div>
+          <h3>Hoàn thành!</h3>
+          <p id="done-summary-text"></p>
+          <!-- Gap summary -->
+          <div class="done-gap-section" id="done-gap-section">
+            <!-- filled by JS -->
           </div>
-          <div class="feedback-row">
-            <span>Kết quả này hữu ích?</span>
-            <button class="feedback-button" data-feedback="true" type="button" aria-label="Hữu ích">👍</button>
-            <button class="feedback-button" data-feedback="false" type="button" aria-label="Không hữu ích">👎</button>
-            <span id="feedback-sent"></span>
+          <div class="done-actions">
+            <button class="agent-action-btn done-retry-btn" id="done-retry-topic" type="button">Chọn chủ đề khác</button>
+            <button class="agent-action-btn agent-action-btn--ghost" id="done-restart" type="button">Bắt đầu lại</button>
           </div>
         </div>
 
-        <div id="loading-state" class="loading-state hidden">
-          <div class="loader"></div>
-          <h2 id="loading-title">Đang đọc bài học…</h2>
-          <p id="loading-copy">Coach đang tìm các đoạn nguồn phù hợp.</p>
+        <!-- Error state -->
+        <div class="agent-error hidden" id="agent-error">
+          <div class="error-icon">!</div>
+          <p id="agent-error-text">Đã xảy ra lỗi.</p>
+          <button class="agent-action-btn" id="agent-retry" type="button">Thử lại</button>
         </div>
+      </div>
 
-        <div id="error-state" class="error-state hidden" role="alert">
-          <span>!</span>
-          <h2>Chưa thể tiếp tục</h2>
-          <p id="error-message"></p>
-          <button id="retry" class="button primary" type="button">Thử lại</button>
+      <!-- Progress bar at bottom -->
+      <div class="agent-progress-bar-wrap">
+        <div class="agent-progress-bar">
+          <div class="agent-progress-fill" id="agent-progress-fill" style="width:0%"></div>
         </div>
-      </section>
-    </section>
+        <div class="agent-progress-meta">
+          <span id="agent-answered">0 đã trả lời</span>
+          <span id="agent-accuracy">—</span>
+        </div>
+      </div>
+    </aside>
   </main>
 
+  <!-- Hidden inputs -->
+  <input id="lesson-id" type="hidden" value="transcript-06-clean">
+
+  <div id="toast" class="toast" role="status"></div>
   <script src="/app.js" defer></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Literal, TypedDict
 from uuid import uuid4
 
@@ -13,6 +14,8 @@ from coach.prompt_registry import compile_prompt
 from coach.prompts import EVALUATION_PROMPT, QUESTION_PROMPT
 from coach.retrieval import Chunk, format_context, load_lesson, retrieve
 from coach.schemas import AnswerEvaluation, RecallQuestion, SourceReference
+
+logger = logging.getLogger(__name__)
 
 
 class CoachState(TypedDict, total=False):
@@ -32,11 +35,12 @@ class CoachState(TypedDict, total=False):
 
 def _model(settings: Settings) -> ChatOpenAI:
     return ChatOpenAI(
-        model=settings.openai_model,
+        model=settings.llm_model,
         temperature=0.1,
         timeout=settings.llm_timeout_seconds,
         max_retries=2,
-        api_key=settings.openai_api_key,
+        api_key=settings.llm_api_key,
+        base_url=settings.llm_base_url,
         callbacks=langchain_callbacks(),
     )
 
@@ -97,7 +101,10 @@ def generate_question(state: CoachState) -> CoachState:
     settings = get_settings()
     if not settings.llm_enabled:
         if not settings.enable_mock_fallback:
-            raise RuntimeError("OPENAI_API_KEY is required when mock fallback is disabled")
+            raise RuntimeError(
+                f"API key for LLM_PROVIDER={settings.llm_provider} is required "
+                "when mock fallback is disabled"
+            )
         return {
             "question": _mock_question(state["chunks"]).model_dump(),
             "phase": "question",
@@ -109,19 +116,33 @@ def generate_question(state: CoachState) -> CoachState:
         QUESTION_PROMPT,
         context=state["context"],
     )
-    question = _model(settings).with_structured_output(RecallQuestion).invoke(
-        prompt,
-        config={"run_name": "generate-recall-question"},
-    )
-    allowed = {chunk["chunk_id"] for chunk in state["chunks"]}
-    with typed_observation("guardrail", "validate-question-citations") as observation:
-        valid = bool(question.source_ids and set(question.source_ids).issubset(allowed))
-        observation.update(
-            input={"source_ids": question.source_ids, "allowed_source_ids": sorted(allowed)},
-            output={"passed": valid},
+    try:
+        question = _model(settings).with_structured_output(RecallQuestion).invoke(
+            prompt,
+            config={"run_name": "generate-recall-question"},
         )
-        if not valid:
-            raise ValueError("Question contains an invalid or missing citation")
+        allowed = {chunk["chunk_id"] for chunk in state["chunks"]}
+        with typed_observation("guardrail", "validate-question-citations") as observation:
+            valid = bool(question.source_ids and set(question.source_ids).issubset(allowed))
+            observation.update(
+                input={"source_ids": question.source_ids, "allowed_source_ids": sorted(allowed)},
+                output={"passed": valid},
+            )
+            if not valid:
+                raise ValueError("Question contains an invalid or missing citation")
+    except Exception as exc:
+        if not settings.enable_mock_fallback:
+            raise
+        logger.warning(
+            "LLM question generation failed (%s); using the local fallback",
+            exc,
+        )
+        return {
+            "question": _mock_question(state["chunks"]).model_dump(),
+            "phase": "question",
+            "progress": 15,
+            "mode": "mock",
+        }
     return {"question": question.model_dump(), "phase": "question", "progress": 15, "mode": "live"}
 
 
@@ -159,7 +180,10 @@ def evaluate_answer(state: CoachState) -> CoachState:
     settings = get_settings()
     if not settings.llm_enabled:
         if not settings.enable_mock_fallback:
-            raise RuntimeError("OPENAI_API_KEY is required when mock fallback is disabled")
+            raise RuntimeError(
+                f"API key for LLM_PROVIDER={settings.llm_provider} is required "
+                "when mock fallback is disabled"
+            )
         evaluation = _mock_evaluation(state)
         return {"evaluation": evaluation.model_dump(), "mode": "mock"}
     question = RecallQuestion.model_validate(state["question"])
@@ -171,10 +195,19 @@ def evaluate_answer(state: CoachState) -> CoachState:
         answer=state["answer"],
         context=state["context"],
     )
-    evaluation = _model(settings).with_structured_output(AnswerEvaluation).invoke(
-        prompt,
-        config={"run_name": "evaluate-recall-answer"},
-    )
+    try:
+        evaluation = _model(settings).with_structured_output(AnswerEvaluation).invoke(
+            prompt,
+            config={"run_name": "evaluate-recall-answer"},
+        )
+    except Exception as exc:
+        if not settings.enable_mock_fallback:
+            raise
+        logger.warning(
+            "LLM answer evaluation failed (%s); using the local fallback",
+            exc,
+        )
+        return {"evaluation": _mock_evaluation(state).model_dump(), "mode": "mock"}
     allowed = {chunk["chunk_id"] for chunk in state["chunks"]}
     with typed_observation("guardrail", "validate-evaluation-citations") as observation:
         evidence = [item for item in evaluation.evidence if item.chunk_id in allowed]

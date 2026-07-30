@@ -1,207 +1,178 @@
-"""LangGraph orchestration for the Multiple Choice Quiz Engine.
+"""Bounded LangGraph workflow for generating and remediating quizzes."""
 
-Creates a cyclic workflow for generating, evaluating, and remediating
-multiple choice questions.
-"""
+from __future__ import annotations
 
-from typing import Literal, TypedDict, Optional
 import json
 import logging
+import re
+from typing import Literal, TypedDict
 
-from langgraph.graph import END, START, StateGraph
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import END, START, StateGraph
 
-from coach.tools import (
-    SemanticSearchTool,
-    QuizGeneratorTool,
-    QuizEvaluatorTool,
-    ErrorAnalysisTool
-)
+from coach.schemas_quiz import QuizModel
+from coach.tools import ErrorAnalysisTool, QuizEvaluatorTool, QuizGeneratorTool, SemanticSearchTool
 
 logger = logging.getLogger(__name__)
 
-# Khởi tạo các công cụ
 search_tool = SemanticSearchTool()
 quiz_tool = QuizGeneratorTool()
 eval_tool = QuizEvaluatorTool()
 error_tool = ErrorAnalysisTool()
 
+
 class QuizState(TypedDict, total=False):
-    # Control flags
     operation: Literal["start", "answer"]
-    
-    # Input data
+    session_id: str
     topic_query: str
-    user_answer_idx: int # Vị trí đáp án người dùng chọn (0-3)
-    
-    # Internal state
+    lesson_id: str
+    num_questions: int
+    bloom_level: Literal["remember", "understand", "apply", "analyze", "evaluate"]
+    user_answer_idx: int
     context_text: str
     quiz_json: str
     eval_passed: bool
     error_analysis_json: str
-    
-    # Output flags
-    phase: Literal["generating", "waiting_for_answer", "remediating", "completed"]
+    generation_attempts: int
+    max_generation_attempts: int
+    current_question_idx: int
+    phase: Literal["generating", "waiting_for_answer", "remediating", "completed", "failed"]
 
 
-# --- NODES ---
+def extract_json(text: str) -> dict:
+    """Extract and parse the first fenced JSON block, or parse the full string."""
+    fenced = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL | re.IGNORECASE)
+    payload = fenced.group(1) if fenced else text
+    return json.loads(payload)
+
+
+def _validated_quiz(state: QuizState) -> QuizModel:
+    return QuizModel.model_validate(extract_json(state["quiz_json"]))
+
 
 def retrieve_context(state: QuizState) -> QuizState:
-    """Tìm kiếm tài liệu liên quan đến chủ đề ôn tập."""
-    logger.info(f"Retrieving context for topic: {state.get('topic_query')}")
-    # Nếu đã có context thì không cần lấy lại (trường hợp bị hallucination cần gen lại câu khác)
     if state.get("context_text"):
-        return state
-        
-    context = search_tool._run(query=state.get("topic_query", "Kiến thức tổng hợp"), top_k=2)
+        return {}
+    context = search_tool._run(
+        query=state.get("topic_query", "Kiến thức tổng hợp"),
+        lesson_id=state.get("lesson_id", "transcript-06-clean"),
+        top_k=6,
+    )
     return {"context_text": context, "phase": "generating"}
 
 
 def generate_quiz(state: QuizState) -> QuizState:
-    """Sinh câu hỏi trắc nghiệm dựa trên Context."""
-    logger.info("Generating Quiz...")
-    # Tự động kết hợp Bloom Taxonomy (Apply) và Yake Distractors
+    attempts = state.get("generation_attempts", 0) + 1
+    num_q = state.get("num_questions", 20)
     quiz_json = quiz_tool._run(
-        context_text=state["context_text"], 
-        num_questions=1, 
-        bloom_level="apply", 
-        use_yake=True
+        context_text=state["context_text"],
+        num_questions=num_q,
+        bloom_level=state.get("bloom_level", "analyze"),
+        use_yake=True,
     )
-    return {"quiz_json": quiz_json}
+    return {
+        "quiz_json": quiz_json,
+        "generation_attempts": attempts,
+        "current_question_idx": 0,
+        "phase": "generating",
+    }
 
-
-def extract_json(text: str) -> dict:
-    import re
-    match = re.search(r'```json\n(.*?)\n```', text, re.DOTALL)
-    if match:
-        return json.loads(match.group(1))
-    return json.loads(text)
 
 def evaluate_quiz(state: QuizState) -> QuizState:
-    """LLM-as-a-judge kiểm định chất lượng câu hỏi."""
-    logger.info("Evaluating Quiz quality...")
-    quiz_data = extract_json(state["quiz_json"])
-    question_obj = quiz_data["questions"][0]
-    
-    q_text = question_obj["question_text"]
-    
-    # Tìm đáp án đúng
-    correct_ans = next(opt["text"] for opt in question_obj["options"] if opt["is_correct"])
-    
-    eval_json = eval_tool._run(
-        context_text=state["context_text"],
-        question=q_text,
-        correct_answer=correct_ans
-    )
-    
-    eval_data = json.loads(eval_json)
-    passed = eval_data.get("overall_passed", False)
-    
+    max_attempts = state.get("max_generation_attempts", 3)
+    try:
+        quiz = _validated_quiz(state)
+        if not quiz.questions:
+            raise ValueError("Quiz has no questions")
+        # Evaluate the first question as a quality gate
+        question = quiz.questions[0]
+        correct_answer = next(option.text for option in question.options if option.is_correct)
+        evaluation = extract_json(
+            eval_tool._run(
+                context_text=state["context_text"],
+                question=question.question_text,
+                correct_answer=correct_answer,
+            )
+        )
+        passed = bool(evaluation.get("overall_passed", False))
+    except (KeyError, StopIteration, TypeError, ValueError, json.JSONDecodeError) as exc:
+        logger.warning("Quiz generation/evaluation output was invalid: %s", exc)
+        passed = False
+
     if passed:
-        logger.info("Quiz passed evaluation. Waiting for user answer.")
         return {"eval_passed": True, "phase": "waiting_for_answer"}
-    else:
-        logger.warning(f"Quiz failed evaluation (Hallucination detected). Regenerating...")
-        return {"eval_passed": False, "phase": "generating"}
+    if state.get("generation_attempts", 0) >= max_attempts:
+        return {"eval_passed": False, "phase": "failed"}
+    return {"eval_passed": False, "phase": "generating"}
 
 
 def process_answer(state: QuizState) -> QuizState:
-    """Xử lý câu trả lời của học viên."""
-    logger.info("Processing user answer...")
-    quiz_data = extract_json(state["quiz_json"])
-    question_obj = quiz_data["questions"][0]
-    
-    user_idx = state["user_answer_idx"]
-    chosen_option = question_obj["options"][user_idx]
-    
-    if chosen_option["is_correct"]:
-        logger.info("User answered correctly!")
+    quiz = _validated_quiz(state)
+    current_idx = state.get("current_question_idx", 0)
+    answer_index = state["user_answer_idx"]
+    if current_idx >= len(quiz.questions):
         return {"phase": "completed"}
-    else:
-        logger.info("User answered incorrectly. Routing to Error Analysis...")
-        return {"phase": "remediating"}
+    if answer_index >= len(quiz.questions[current_idx].options):
+        raise ValueError("answer index is outside the available options")
+    if quiz.questions[current_idx].options[answer_index].is_correct:
+        # Move to next question
+        next_idx = current_idx + 1
+        if next_idx >= len(quiz.questions):
+            return {"phase": "completed", "current_question_idx": next_idx}
+        return {"phase": "waiting_for_answer", "current_question_idx": next_idx}
+    return {"phase": "remediating", "generation_attempts": 0}
 
 
 def analyze_error(state: QuizState) -> QuizState:
-    """Phân tích nguyên nhân lỗi sai và lỗ hổng kiến thức."""
-    logger.info("Analyzing misconception...")
-    quiz_data = extract_json(state["quiz_json"])
-    question_obj = quiz_data["questions"][0]
-    
-    q_text = question_obj["question_text"]
-    correct_ans = next(opt["text"] for opt in question_obj["options"] if opt["is_correct"])
-    
-    user_idx = state["user_answer_idx"]
-    user_ans = question_obj["options"][user_idx]["text"]
-    
-    error_analysis = error_tool._run(
-        question=q_text,
-        correct_answer=correct_ans,
-        user_answer=user_ans,
-        context_text=state["context_text"]
+    quiz = _validated_quiz(state)
+    current_idx = state.get("current_question_idx", 0)
+    question = quiz.questions[min(current_idx, len(quiz.questions) - 1)]
+    correct_answer = next(option.text for option in question.options if option.is_correct)
+    user_answer = question.options[state["user_answer_idx"]].text
+    analysis = error_tool._run(
+        question=question.question_text,
+        correct_answer=correct_answer,
+        user_answer=user_answer,
+        context_text=state["context_text"],
     )
-    
-    return {"error_analysis_json": error_analysis, "phase": "generating"}
+    return {"error_analysis_json": analysis, "phase": "generating"}
 
-
-# --- ROUTING LOGIC ---
 
 def route_start(state: QuizState) -> str:
-    if state["operation"] == "start":
-        return "retrieve_context"
-    elif state["operation"] == "answer":
-        return "process_answer"
-    return "retrieve_context"
+    return "process_answer" if state["operation"] == "answer" else "retrieve_context"
+
 
 def route_evaluation(state: QuizState) -> str:
-    if state["eval_passed"]:
-        # Tạm dừng đồ thị, chờ người dùng nhập đáp án
-        return END
-    else:
-        # Nếu chất lượng câu hỏi kém, quay lại vòng lặp sinh câu hỏi mới
-        return "generate_quiz"
+    return "generate_quiz" if state["phase"] == "generating" else END
+
 
 def route_answer(state: QuizState) -> str:
-    if state["phase"] == "completed":
-        return END
-    else:
-        return "analyze_error"
+    return END if state["phase"] == "completed" else "analyze_error"
 
-
-# --- BUILD GRAPH ---
 
 builder = StateGraph(QuizState)
-
 builder.add_node("retrieve_context", retrieve_context)
 builder.add_node("generate_quiz", generate_quiz)
 builder.add_node("evaluate_quiz", evaluate_quiz)
 builder.add_node("process_answer", process_answer)
 builder.add_node("analyze_error", analyze_error)
-
-builder.add_conditional_edges(START, route_start)
-
+builder.add_conditional_edges(
+    START,
+    route_start,
+    {"retrieve_context": "retrieve_context", "process_answer": "process_answer"},
+)
 builder.add_edge("retrieve_context", "generate_quiz")
 builder.add_edge("generate_quiz", "evaluate_quiz")
-
 builder.add_conditional_edges(
-    "evaluate_quiz", 
+    "evaluate_quiz",
     route_evaluation,
-    {
-        END: END,
-        "generate_quiz": "generate_quiz"
-    }
+    {"generate_quiz": "generate_quiz", END: END},
 )
-
 builder.add_conditional_edges(
     "process_answer",
     route_answer,
-    {
-        END: END,
-        "analyze_error": "analyze_error"
-    }
+    {"analyze_error": "analyze_error", END: END},
 )
-
-# Vòng lặp: Sau khi phân tích lỗi sai, ép hệ thống sinh ra một câu hỏi mới để học viên gỡ điểm
 builder.add_edge("analyze_error", "generate_quiz")
 
 quiz_graph = builder.compile(checkpointer=InMemorySaver())

@@ -8,9 +8,9 @@ import logging
 from typing import Optional
 
 import instructor
-from openai import OpenAI
 
 from coach.config import get_settings
+from coach.llm_client import create_openai_compatible_client
 from coach.schemas_quiz import QuizModel
 
 logger = logging.getLogger(__name__)
@@ -50,8 +50,10 @@ def generate_quiz(
         A validated QuizModel object.
     """
     settings = get_settings()
-    if not settings.openai_api_key:
-        raise RuntimeError("OPENAI_API_KEY is required for quiz generation")
+    if not settings.llm_enabled:
+        raise RuntimeError(
+            f"API key for LLM_PROVIDER={settings.llm_provider} is required for quiz generation"
+        )
 
     from coach.bloom_prompts import get_bloom_prompt
     
@@ -75,11 +77,11 @@ def generate_quiz(
         except Exception as exc:
             logger.warning("Failed to extract distractors with YAKE: %s", exc)
 
-    client = instructor.from_openai(OpenAI(api_key=settings.openai_api_key))
+    client = instructor.from_openai(create_openai_compatible_client(settings))
 
     try:
         quiz: QuizModel = client.chat.completions.create(
-            model=settings.openai_model,
+            model=settings.llm_model,
             messages=[
                 {"role": "system", "content": _QUIZ_SYSTEM_PROMPT},
                 {"role": "user", "content": user_prompt_text},

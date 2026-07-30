@@ -19,6 +19,15 @@ class CoachApiTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/health").status_code, 200)
         self.assertEqual(self.client.get("/").status_code, 200)
 
+    def test_pdf_slides_endpoint(self) -> None:
+        res1 = self.client.get("/api/slides/d1-slide-hackathon.pdf")
+        self.assertEqual(res1.status_code, 200)
+        self.assertEqual(res1.headers["content-type"], "application/pdf")
+
+        res2 = self.client.get("/api/slides/d2-slide-hackathon.pdf")
+        self.assertEqual(res2.status_code, 200)
+        self.assertEqual(res2.headers["content-type"], "application/pdf")
+
     def test_correct_answer_completes_session(self) -> None:
         started = self.client.post(
             "/api/sessions",

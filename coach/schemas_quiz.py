@@ -4,8 +4,9 @@ Defines the rigid JSON structure the LLM must return when summarizing content
 for Quiz generation.
 """
 
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from typing import List, Literal, Optional, Self
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 class MicroFact(BaseModel):
     """Một thông tin hoặc định nghĩa cụ thể, ngắn gọn, có tính đúng/sai rõ ràng."""
@@ -70,6 +71,13 @@ class QuizQuestion(BaseModel):
         description="Số trang, vị trí dòng, hoặc ID đoạn văn để tham chiếu (nếu có trong Text đầu vào).",
     )
 
+    @model_validator(mode="after")
+    def has_exactly_one_correct_option(self) -> Self:
+        if sum(option.is_correct for option in self.options) != 1:
+            raise ValueError("quiz question must have exactly one correct option")
+        return self
+
+
 class QuizModel(BaseModel):
     """Một bộ câu hỏi trắc nghiệm (Quiz) hoàn chỉnh."""
     title: str = Field(
@@ -80,3 +88,40 @@ class QuizModel(BaseModel):
         min_length=1,
     )
 
+
+class QuizStartRequest(BaseModel):
+    topic_query: str = Field(default="Transformer và Generative AI", min_length=3, max_length=300)
+    lesson_id: str = Field(default="transcript-06-clean", pattern=r"^[a-zA-Z0-9_-]+$")
+    num_questions: int = Field(default=20, ge=1, le=25, description="Số lượng câu hỏi trong bộ quiz (mặc định 20, tối đa 25).")
+    bloom_level: Literal["remember", "understand", "apply", "analyze", "evaluate"] = "analyze"
+
+
+class QuizAnswerRequest(BaseModel):
+    session_id: str = Field(min_length=8, max_length=64)
+    answer_index: int = Field(ge=0, le=3)
+
+
+class PublicQuizOption(BaseModel):
+    index: int = Field(ge=0, le=3)
+    text: str
+
+
+class PublicQuizQuestion(BaseModel):
+    question_text: str
+    options: list[PublicQuizOption] = Field(min_length=4, max_length=4)
+    source_file: str | None = None
+    page_number: int | None = None
+
+
+class QuizSessionResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    session_id: str
+    phase: Literal["waiting_for_answer", "remediating", "completed", "failed"]
+    question: PublicQuizQuestion | None = None
+    is_correct: bool | None = None
+    explanation: str | None = None
+    error_analysis: dict | None = None
+    generation_attempts: int = Field(default=0, ge=0, le=3)
+    current_question_idx: int = Field(default=0, ge=0, description="Index câu hiện tại (0-based).")
+    total_questions: int = Field(default=20, ge=1, le=25, description="Tổng số câu trong bộ quiz.")

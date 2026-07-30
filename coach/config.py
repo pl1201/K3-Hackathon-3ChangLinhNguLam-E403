@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -13,9 +14,13 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_host: str = "127.0.0.1"
     app_port: int = 8000
+    llm_provider: Literal["openai", "deepseek"] = "openai"
     openai_api_key: str | None = None
     openai_model: str = "gpt-4.1-mini"
     openai_embedding_model: str = "text-embedding-3-small"
+    deepseek_api_key: str | None = None
+    deepseek_model: str = "deepseek-chat"
+    deepseek_base_url: str = "https://api.deepseek.com"
     llama_cloud_api_key: str | None = Field(default=None, env="LLAMA_CLOUD_API_KEY")
     langfuse_public_key: str | None = None
     langfuse_secret_key: str | None = None
@@ -36,7 +41,19 @@ class Settings(BaseSettings):
 
     @property
     def llm_enabled(self) -> bool:
-        return self.enable_llm and bool(self.openai_api_key)
+        return self.enable_llm and bool(self.llm_api_key)
+
+    @property
+    def llm_api_key(self) -> str | None:
+        return self.deepseek_api_key if self.llm_provider == "deepseek" else self.openai_api_key
+
+    @property
+    def llm_model(self) -> str:
+        return self.deepseek_model if self.llm_provider == "deepseek" else self.openai_model
+
+    @property
+    def llm_base_url(self) -> str | None:
+        return self.deepseek_base_url if self.llm_provider == "deepseek" else None
 
     @property
     def tracing_enabled(self) -> bool:
