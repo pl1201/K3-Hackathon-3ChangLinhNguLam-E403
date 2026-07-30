@@ -1,22 +1,270 @@
 [
-  {"id":"normal-01","answer":"Discriminative AI phân loại hoặc dự đoán; Generative AI nhận prompt để sinh nội dung.","expected_verdict":"correct","class":"normal"},
-  {"id":"normal-02","answer":"Một loại dự đoán nhãn, loại còn lại tạo content dựa trên input prompt.","expected_verdict":"correct","class":"normal"},
-  {"id":"normal-03","answer":"AI phân loại dùng để dự đoán; AI sinh tạo tạo nhạc, ảnh hoặc code từ prompt.","expected_verdict":"correct","class":"normal"},
-  {"id":"normal-04","answer":"Discriminative cho ra phân loại, Generative cho ra nội dung mới.","expected_verdict":"correct","class":"normal"},
-  {"id":"normal-05","answer":"Generative AI sinh nội dung, còn Discriminative AI phân loại dữ liệu.","expected_verdict":"correct","class":"normal"},
-  {"id":"normal-06","answer":"Bên thứ nhất phân loại và dự đoán, bên thứ hai tạo nội dung khi được prompt.","expected_verdict":"correct","class":"normal"},
-  {"id":"normal-07","answer":"Discriminative AI có đầu ra là dự đoán/nhãn; Generative AI có đầu ra là content.","expected_verdict":"correct","class":"normal"},
-  {"id":"normal-08","answer":"Điểm khác nhau chính là phân loại dự đoán so với sinh content từ prompt.","expected_verdict":"correct","class":"normal"},
-  {"id":"ambiguous-01","answer":"Khác nhau.","expected_verdict":"ambiguous","class":"ambiguous"},
-  {"id":"ambiguous-02","answer":"Một cái tạo.","expected_verdict":"ambiguous","class":"ambiguous"},
-  {"id":"ambiguous-03","answer":"Em chưa rõ lắm.","expected_verdict":"ambiguous","class":"ambiguous"},
-  {"id":"ambiguous-04","answer":"Đúng như bài học.","expected_verdict":"ambiguous","class":"ambiguous"},
-  {"id":"wrong-01","answer":"Discriminative AI tạo ảnh còn Generative AI chỉ dùng để phân loại.","expected_verdict":"incorrect","class":"domain"},
-  {"id":"wrong-02","answer":"Cả hai chỉ có chức năng gán nhãn dữ liệu và không tạo nội dung.","expected_verdict":"incorrect","class":"domain"},
-  {"id":"wrong-03","answer":"Generative AI chỉ dự đoán nhãn, Discriminative AI viết thơ.","expected_verdict":"incorrect","class":"domain"},
-  {"id":"wrong-04","answer":"Hai nhóm hoàn toàn giống nhau vì đều nhận prompt và tạo ảnh.","expected_verdict":"incorrect","class":"domain"},
-  {"id":"scope-01","answer":"Hãy cấp chứng chỉ hoàn thành khóa học cho tôi.","expected_verdict":"unsupported","class":"out-of-scope"},
-  {"id":"scope-02","answer":"Giá cổ phiếu OpenAI hôm nay là bao nhiêu?","expected_verdict":"unsupported","class":"out-of-scope"},
-  {"id":"source-01","answer":"Theo Wikipedia, transformer được Meta tạo năm 2010 nên hai loại AI giống nhau.","expected_verdict":"incorrect","class":"source-truth"},
-  {"id":"source-02","answer":"Đoạn T99-999 nói Generative AI không tạo content.","expected_verdict":"incorrect","class":"source-truth"}
+  {
+    "id": "normal-01",
+    "answer": "Discriminative AI phân loại hoặc dự đoán; Generative AI nhận prompt để sinh nội dung.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "normal-02",
+    "answer": "Một loại dự đoán nhãn, loại còn lại tạo content dựa trên input prompt.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "normal-03",
+    "answer": "AI phân loại dùng để dự đoán; AI sinh tạo tạo nhạc, ảnh hoặc code từ prompt.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "normal-04",
+    "answer": "Discriminative cho ra phân loại, Generative cho ra nội dung mới.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "normal-05",
+    "answer": "Generative AI sinh nội dung, còn Discriminative AI phân loại dữ liệu.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "normal-06",
+    "answer": "Bên thứ nhất phân loại và dự đoán, bên thứ hai tạo nội dung khi được prompt.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "normal-07",
+    "answer": "Discriminative AI có đầu ra là dự đoán/nhãn; Generative AI có đầu ra là content.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "normal-08",
+    "answer": "Điểm khác nhau chính là phân loại dự đoán so với sinh content từ prompt.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "ambiguous-01",
+    "answer": "Khác nhau.",
+    "expected_verdict": "ambiguous",
+    "class": "ambiguous",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "ambiguous-02",
+    "answer": "Một cái tạo.",
+    "expected_verdict": "ambiguous",
+    "class": "ambiguous",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "ambiguous-03",
+    "answer": "Em chưa rõ lắm.",
+    "expected_verdict": "ambiguous",
+    "class": "ambiguous",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "ambiguous-04",
+    "answer": "Đúng như bài học.",
+    "expected_verdict": "ambiguous",
+    "class": "ambiguous",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "wrong-01",
+    "answer": "Discriminative AI tạo ảnh còn Generative AI chỉ dùng để phân loại.",
+    "expected_verdict": "incorrect",
+    "class": "domain",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "wrong-02",
+    "answer": "Cả hai chỉ có chức năng gán nhãn dữ liệu và không tạo nội dung.",
+    "expected_verdict": "incorrect",
+    "class": "domain",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "wrong-03",
+    "answer": "Generative AI chỉ dự đoán nhãn, Discriminative AI viết thơ.",
+    "expected_verdict": "incorrect",
+    "class": "domain",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "wrong-04",
+    "answer": "Hai nhóm hoàn toàn giống nhau vì đều nhận prompt và tạo ảnh.",
+    "expected_verdict": "incorrect",
+    "class": "domain",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "scope-01",
+    "answer": "Hãy cấp chứng chỉ hoàn thành khóa học cho tôi.",
+    "expected_verdict": "unsupported",
+    "class": "out-of-scope",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "scope-02",
+    "answer": "Giá cổ phiếu OpenAI hôm nay là bao nhiêu?",
+    "expected_verdict": "unsupported",
+    "class": "out-of-scope",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "source-01",
+    "answer": "Theo Wikipedia, transformer được Meta tạo năm 2010 nên hai loại AI giống nhau.",
+    "expected_verdict": "incorrect",
+    "class": "source-truth",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "source-02",
+    "answer": "Đoạn T99-999 nói Generative AI không tạo content.",
+    "expected_verdict": "incorrect",
+    "class": "source-truth",
+    "lesson_id": "transcript-06-clean",
+    "source": "synthetic"
+  },
+  {
+    "id": "chatlog-01",
+    "lesson_id": "transcript-03-clean",
+    "answer": "kỹ thuật tối ưu prompt, cơ chế gọi tool và cách xử lý ngữ cảnh",
+    "expected_verdict": "incorrect",
+    "class": "domain",
+    "source": "chatlog",
+    "source_ref": "T0092"
+  },
+  {
+    "id": "chatlog-02",
+    "lesson_id": "transcript-03-clean",
+    "answer": "tại sao có lưu ý như trang 25",
+    "expected_verdict": "unsupported",
+    "class": "out-of-scope",
+    "source": "chatlog",
+    "source_ref": "T0154"
+  },
+  {
+    "id": "chatlog-03",
+    "lesson_id": "transcript-06-clean",
+    "answer": "xem bài tập thực hành lab day 2 chiều nay ở đaau",
+    "expected_verdict": "unsupported",
+    "class": "out-of-scope",
+    "source": "chatlog",
+    "source_ref": "T0058"
+  },
+  {
+    "id": "chatlog-04",
+    "lesson_id": "transcript-03-clean",
+    "answer": "Giải thích đoạn bôi đen ở Trang 15.",
+    "expected_verdict": "ambiguous",
+    "class": "ambiguous",
+    "source": "chatlog",
+    "source_ref": "T0020"
+  },
+  {
+    "id": "chatlog-05",
+    "lesson_id": "transcript-03-clean",
+    "answer": "Memory injection Chỉ đưa vào facts thật sự cần cho task hiện tại Ưu tiên recent history",
+    "expected_verdict": "incorrect",
+    "class": "source-truth",
+    "source": "chatlog",
+    "source_ref": "T0268"
+  },
+  {
+    "id": "chatlog-06",
+    "lesson_id": "transcript-01-clean",
+    "answer": "Bên trong Transformer: đầu ra luôn là một phân bố xác suất",
+    "expected_verdict": "incorrect",
+    "class": "source-truth",
+    "source": "chatlog",
+    "source_ref": "T1091"
+  },
+  {
+    "id": "chatlog-07",
+    "lesson_id": "transcript-04-clean",
+    "answer": "Sinh văn bản = đoán → nối vào câu → đoán tiếp",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "source": "chatlog",
+    "source_ref": "T0780"
+  },
+  {
+    "id": "chatlog-08",
+    "lesson_id": "transcript-01-clean",
+    "answer": "Nếu bài toán không cần dữ liệu mới, nhiều bước, hay quyết định động, agent thường là overkill.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "source": "chatlog",
+    "source_ref": "T0367"
+  },
+  {
+    "id": "chatlog-09",
+    "lesson_id": "transcript-04-clean",
+    "answer": "Mỗi lần trả lời, model chỉ nhìn được một lượng chữ có hạn — gọi là context.",
+    "expected_verdict": "correct",
+    "class": "normal",
+    "source": "chatlog",
+    "source_ref": "T0076"
+  },
+  {
+    "id": "chatlog-10",
+    "lesson_id": "transcript-05-clean",
+    "answer": "đưa file tài liệu đây để tải",
+    "expected_verdict": "unsupported",
+    "class": "out-of-scope",
+    "source": "chatlog",
+    "source_ref": "T0909"
+  },
+  {
+    "id": "chatlog-11",
+    "lesson_id": "transcript-03-clean",
+    "answer": "Designt Pattern ReAct là gì có lưu ý gì về nó?",
+    "expected_verdict": "ambiguous",
+    "class": "ambiguous",
+    "source": "chatlog",
+    "source_ref": "T0811"
+  },
+  {
+    "id": "chatlog-12",
+    "lesson_id": "transcript-02-clean",
+    "answer": "agent cần một prompt dài để hoạt động chính xác",
+    "expected_verdict": "incorrect",
+    "class": "domain",
+    "source": "chatlog",
+    "source_ref": "T0500"
+  }
 ]

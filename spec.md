@@ -45,11 +45,18 @@ Cần bổ sung quan sát có bằng chứng từ Study Mode, NotebookLM và Qui
 
 ## §7. Kiểm thử
 
-- Groundedness: mọi kết luận kiến thức có citation hợp lệ.
-- Evaluation consistency: cùng rubric không đổi verdict vô lý.
-- Recovery: ambiguous/unsupported đi đúng nhánh.
-- UX: người học hoàn tất phiên mà không cần người hướng dẫn.
+- **Groundedness**: Mọi `evidence[].chunk_id` trong output phải ∈ tập `chunk_id` đã retrieve cho case đó (đếm được tự động, không cần đọc hiểu).
+- **Evaluation consistency**: Case cùng `class` phải ra cùng `verdict` nếu answer giống nhau (hoặc chỉ khác biệt diễn đạt). Kiểm chứng bằng cách chạy lại 2 lần 1 subset và so khớp kết quả.
+- **Recovery**: Mọi case có `class=ambiguous` phải trả về `next_action=clarify`; mọi case có `class=out-of-scope` phải trả về `next_action=stop`.
+- **UX**: Người học hoàn tất phiên mà không cần người hướng dẫn (kiểm chứng bằng user testing với ≥3 người dùng mới).
 - **Quality bar ban đầu:** ≥85% case qua toàn bộ tiêu chí và 100% case không được bịa nguồn. Chỉ chốt chính thức tại hạn CP4.
+
+**Tóm tắt kết quả đánh giá (Lượt gần nhất)**:
+Xem chi tiết tại bảng kết quả: [run-01.md](file:///d:/AIlab/Batch03-K3-AI-Product-Hackathon/eval/results/run-01.md).
+
+| Lượt chạy | Tổng case | Pass Rate | Citation Hợp lệ | Ghi chú |
+|---|---|---|---|---|
+| Run 01 | 32 | Chờ chạy với LLM thật | 100% (chờ đo) | Chưa có API key để chạy thật |
 
 ## §8. Phân công & kế hoạch
 
