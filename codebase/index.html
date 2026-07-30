@@ -233,10 +233,32 @@
           <div class="welcome-illustration" aria-hidden="true">
             <div class="welcome-orb"></div>
           </div>
-          <p class="welcome-msg">Tôi sẽ tóm tắt nội dung bài học và dẫn dắt bạn qua chuỗi câu hỏi có mục tiêu.</p>
-          <button id="agent-start-btn" class="agent-action-btn" type="button">
-            <span>▶</span> Bắt đầu học với AI
-          </button>
+          <p class="welcome-msg">Chọn chế độ học tập phù hợp với bạn.</p>
+          <div class="welcome-dual-buttons">
+            <button id="agent-summary-btn" class="agent-action-btn agent-action-btn--summary" type="button">
+              <span>📝</span> Tóm tắt bài học
+            </button>
+            <button id="agent-quiz-btn" class="agent-action-btn agent-action-btn--quiz" type="button">
+              <span>❓</span> Tạo Quiz
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary Chat panel -->
+        <div class="agent-summary-chat hidden" id="agent-summary-chat">
+          <div class="summary-chat-header">
+            <span class="summary-chat-tag">📝 TRỢ GIẢNG AI</span>
+            <button class="summary-chat-switch" id="summary-chat-switch-quiz" type="button" title="Chuyển sang Quiz">❓ Tạo Quiz →</button>
+          </div>
+          <div class="summary-chat-messages" id="summary-chat-messages">
+            <!-- chat messages rendered by JS -->
+          </div>
+          <div class="summary-chat-input-wrap">
+            <input id="summary-chat-input" class="summary-chat-input" type="text"
+              placeholder="Hỏi thêm về bài học… (VD: Tóm tắt phần Attention)"
+              maxlength="300" autocomplete="off">
+            <button id="summary-chat-send" class="summary-chat-send-btn" type="button" aria-label="Gửi">➤</button>
+          </div>
         </div>
 
         <!-- Thinking / loading state -->

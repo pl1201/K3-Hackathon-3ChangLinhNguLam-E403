@@ -48,6 +48,7 @@ const AGENT_PANELS = [
   "agent-welcome",
   "agent-thinking",
   "agent-summary",
+  "agent-summary-chat",
   "agent-topic-select",
   "agent-quiz-flow",
   "agent-done",
@@ -634,6 +635,86 @@ function resetAgent() {
   updateAgentProgress();
   setAgentStatus("idle", "Sẵn sàng");
   showAgentPanel("agent-welcome");
+  // Clear chat messages
+  const chatMsgs = $("#summary-chat-messages");
+  if (chatMsgs) chatMsgs.innerHTML = "";
+}
+
+// ─── Summary Chat Mode ─────────────────────────────────────────
+async function startSummaryChat() {
+  state.agentPhase = "summary-chat";
+  setAgentStatus("busy", "Đang tóm tắt…");
+  showAgentPanel("agent-summary-chat");
+
+  const chatMsgs = $("#summary-chat-messages");
+  chatMsgs.innerHTML = "";
+
+  // Show loading bubble
+  appendChatBubble("assistant", "Đang phân tích bài học…", true);
+
+  const lessonId = $("#lesson-id").value;
+  try {
+    const data = await request("/api/summarize", {
+      method: "POST",
+      body: JSON.stringify({ lesson_id: lessonId }),
+    });
+    // Remove loading
+    chatMsgs.innerHTML = "";
+    appendChatBubble("assistant", data.content);
+    setAgentStatus("active", "Trợ giảng AI");
+  } catch (err) {
+    chatMsgs.innerHTML = "";
+    appendChatBubble("assistant", "Lỗi: " + err.message);
+    setAgentStatus("idle", "Lỗi");
+  }
+}
+
+async function sendSummaryMessage() {
+  const input = $("#summary-chat-input");
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = "";
+
+  appendChatBubble("user", msg);
+  appendChatBubble("assistant", "Đang suy nghĩ…", true);
+  setAgentStatus("busy", "Đang trả lời…");
+
+  const lessonId = $("#lesson-id").value;
+  try {
+    const data = await request("/api/summarize", {
+      method: "POST",
+      body: JSON.stringify({ lesson_id: lessonId, user_query: msg }),
+    });
+    // Remove loading bubble
+    const loading = $("#summary-chat-messages .chat-bubble.loading");
+    if (loading) loading.remove();
+    appendChatBubble("assistant", data.content);
+    setAgentStatus("active", "Trợ giảng AI");
+  } catch (err) {
+    const loading = $("#summary-chat-messages .chat-bubble.loading");
+    if (loading) loading.remove();
+    appendChatBubble("assistant", "Lỗi: " + err.message);
+    setAgentStatus("idle", "Lỗi");
+  }
+}
+
+function appendChatBubble(role, text, isLoading = false) {
+  const chatMsgs = $("#summary-chat-messages");
+  const bubble = document.createElement("div");
+  bubble.className = `chat-bubble chat-${role}${isLoading ? " loading" : ""}`;
+
+  if (role === "assistant" && !isLoading) {
+    // Simple markdown-like rendering
+    bubble.innerHTML = text
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n- /g, "\n• ")
+      .replace(/\n/g, "<br>");
+  } else {
+    bubble.textContent = text;
+  }
+
+  chatMsgs.appendChild(bubble);
+  chatMsgs.scrollTop = chatMsgs.scrollHeight;
 }
 
 // ─── Slide Decks Data for All Sources ─────────────────────────
@@ -1046,8 +1127,8 @@ $$(".source-item").forEach((item) => {
     const slideKey = item.dataset.slide;
     const key = id || slideKey;
 
-    if (id) {
-      $("#lesson-id").value = id;
+    if (key) {
+      $("#lesson-id").value = key;
     }
 
     renderSlideDeck(key);
@@ -1127,7 +1208,18 @@ $$(".dot").forEach((dot) => {
 })();
 
 // ─── Agent Button Events ──────────────────────────────────────
-$("#agent-start-btn").addEventListener("click", agentStart);
+// Welcome screen dual buttons
+$("#agent-summary-btn").addEventListener("click", startSummaryChat);
+$("#agent-quiz-btn").addEventListener("click", showTopicSelect);
+
+// Summary chat: switch to quiz
+$("#summary-chat-switch-quiz")?.addEventListener("click", showTopicSelect);
+
+// Summary chat: send message
+$("#summary-chat-send")?.addEventListener("click", sendSummaryMessage);
+$("#summary-chat-input")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendSummaryMessage();
+});
 
 // "Bắt đầu Quiz ngay" → show topic select
 $("#agent-quiz-start").addEventListener("click", showTopicSelect);
@@ -1139,10 +1231,13 @@ $("#qf-submit").addEventListener("click", submitQuizAnswer);
 $("#qf-restart").addEventListener("click", resetAgent);
 $("#done-restart").addEventListener("click", resetAgent);
 $("#done-retry-topic")?.addEventListener("click", showTopicSelect);
-$("#agent-retry").addEventListener("click", agentStart);
+$("#agent-retry").addEventListener("click", () => {
+  resetAgent();
+  startSummaryChat();
+});
 $("#summary-refresh").addEventListener("click", () => {
   resetAgent();
-  setTimeout(agentStart, 100);
+  setTimeout(startSummaryChat, 100);
 });
 
 // ─── Reset Session ────────────────────────────────────────────
