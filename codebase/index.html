@@ -1,89 +1,149 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Active Recall Coach - VLearn</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Active Recall Coach giúp học viên phát hiện lỗ hổng kiến thức dựa trên transcript VLearn.">
+  <title>Active Recall Coach · VLearn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <div class="bg-shape bg-shape-1"></div>
-    <div class="bg-shape bg-shape-2"></div>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="VLearn Active Recall">
+      <span class="brand-mark">V</span>
+      <span>VLearn <strong>Recall</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <span id="runtime-badge" class="badge neutral">Đang kiểm tra hệ thống</span>
+      <button id="reset-session" class="button ghost" type="button">Phiên mới</button>
+    </div>
+  </header>
 
-    <header class="navbar">
-        <div class="logo">
-            <i class="fa-solid fa-graduation-cap"></i>
-            <span>VLearn <span class="highlight">AI</span></span>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">ACTIVE RECALL · FOUNDATION</p>
+        <h1>Đừng chỉ đọc lại.<br><span>Hãy kiểm tra điều bạn thực sự hiểu.</span></h1>
+      </div>
+      <div class="progress-card" aria-label="Tiến độ phiên học">
+        <div class="progress-meta">
+          <span>Tiến độ phiên</span>
+          <strong id="progress-value">0%</strong>
         </div>
-        <div class="nav-links">
-            <a href="#" class="active">Bài học</a>
-            <a href="#">Tiến độ</a>
-            <a href="#">Cài đặt</a>
+        <div class="progress-track"><span id="progress-bar"></span></div>
+        <p id="phase-label">Sẵn sàng bắt đầu</p>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <aside class="source-panel panel">
+        <div class="panel-heading">
+          <div>
+            <p class="kicker">NGUỒN HỌC</p>
+            <h2>Transformer & Attention</h2>
+          </div>
+          <span class="source-chip">Transcript 06</span>
         </div>
-        <div class="user-profile">
-            <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
+        <p class="scope-note">Coach chỉ đánh giá dựa trên nội dung bài học. Nếu thiếu căn cứ, hệ thống sẽ nói rõ thay vì đoán.</p>
+        <nav class="lesson-outline" aria-label="Mục lục bài học">
+          <button class="outline-item active" type="button">
+            <span>01</span>
+            <span><strong>Các nhóm AI</strong><small>Discriminative · Generative</small></span>
+          </button>
+          <button class="outline-item" type="button">
+            <span>02</span>
+            <span><strong>Transformer</strong><small>Bước ngoặt kiến trúc</small></span>
+          </button>
+          <button class="outline-item" type="button">
+            <span>03</span>
+            <span><strong>Attention</strong><small>Cơ chế tập trung ngữ cảnh</small></span>
+          </button>
+        </nav>
+        <article id="source-card" class="source-card">
+          <div class="source-id">T06-051</div>
+          <p>Discriminative AI dùng để phân loại, dự đoán. Generative AI nhận prompt và trả về nội dung.</p>
+        </article>
+      </aside>
+
+      <section class="coach-panel panel" aria-live="polite">
+        <div class="coach-header">
+          <div class="coach-identity">
+            <span class="coach-avatar">AR</span>
+            <div><strong>Recall Coach</strong><small id="coach-status">Sẵn sàng</small></div>
+          </div>
+          <span class="grounded-label"><span></span>Bám nguồn</span>
         </div>
-    </header>
 
-    <main class="container">
-        <!-- Left Column: Document Viewer -->
-        <section class="document-section panel glass-panel">
-            <div class="panel-header">
-                <h2><i class="fa-solid fa-file-lines"></i> Foundation: Transformer & Attention</h2>
-                <div class="actions">
-                    <button class="btn btn-icon"><i class="fa-solid fa-expand"></i></button>
-                </div>
-            </div>
-            <div class="panel-content document-content" id="document-content">
-                <h3>Khái niệm cơ bản về Transformer</h3>
-                <p><strong>[T06-044]</strong> Thế thì vì sao cái năm 25-26 này lại là năm bước ngoặt? Lúc nãy câu hỏi ban đầu của mình là các bạn đang thấy AI nó đang thuận trend đúng không? Bây giờ câu hỏi này mình nghĩ là sẽ không nhiều người giải thích được: theo các bạn, vì sao người ta lại ghi là AI đến năm 2030 có thể đóng góp vào GDP toàn cầu 15,7 nghìn tỷ đô?</p>
-                
-                <p><strong>[T06-051]</strong> Nhóm đầu tiên là cái gọi là discriminative AI — nói một tiếng là phân loại, dự đoán. Cái này thường được sử dụng nhiều ở giai đoạn chúng ta huấn luyện mô hình, chúng ta gán nhãn vân vân... Nhóm thứ hai là generative AI: bản chất chức năng chính của nó là chúng ta prompt — prompt cũng có thể hiểu là một input — nhưng nó trả về cho chúng ta cái content.</p>
-                
-                <p><strong>[T06-059]</strong> Khoảng năm 1970 cho đến năm 1990 được xem là vài thập kỷ gọi là mùa đông AI: các nhà khoa học cãi nhau câu chuyện là tôi sẽ phải dùng rất nhiều chuyên gia để viết cái vòng lặp hàng tỷ lần... Mãi đến năm 2017 thì có kiến trúc transformer, do các nhà khoa học của Google tạo ra.</p>
+        <div id="empty-state" class="empty-state">
+          <div class="orb">✦</div>
+          <p class="kicker">PHIÊN ÔN TẬP CÓ HƯỚNG DẪN</p>
+          <h2>Một câu hỏi. Một câu trả lời.<br>Một lỗ hổng được làm rõ.</h2>
+          <p>Coach sẽ tạo câu hỏi từ transcript, đọc câu trả lời của bạn và dẫn sang bước phù hợp.</p>
+          <button id="start-session" class="button primary" type="button">
+            Bắt đầu kiểm tra <span>→</span>
+          </button>
+          <small>Khoảng 3–5 phút · Không tính điểm chính thức</small>
+        </div>
 
-                <p><em>(Nội dung bài học được trích xuất từ buổi học thực tế trên hệ thống VLearn...)</em></p>
-            </div>
-        </section>
+        <div id="learning-state" class="learning-state hidden">
+          <div class="step-row">
+            <span id="step-chip" class="step-chip">CÂU 1</span>
+            <span id="difficulty-chip" class="difficulty-chip">Nền tảng</span>
+          </div>
+          <h2 id="question-text">Đang tạo câu hỏi…</h2>
+          <p class="answer-hint">Trả lời bằng lời của bạn. Không cần giống nguyên văn bài giảng.</p>
+          <label class="answer-box">
+            <span class="sr-only">Câu trả lời của bạn</span>
+            <textarea id="answer-input" rows="6" maxlength="4000" placeholder="Mình hiểu rằng…"></textarea>
+            <span class="answer-meta"><span id="char-count">0</span>/4000</span>
+          </label>
+          <div class="action-row">
+            <button id="submit-answer" class="button primary" type="button">Kiểm tra câu trả lời</button>
+            <button id="show-source" class="button ghost" type="button">Xem đoạn nguồn</button>
+          </div>
+        </div>
 
-        <!-- Right Column: Active Recall Coach -->
-        <section class="coach-section panel glass-panel">
-            <div class="panel-header">
-                <h2><i class="fa-solid fa-robot"></i> Active Recall Coach</h2>
-                <div class="status-indicator">
-                    <span class="dot online"></span> Sẵn sàng
-                </div>
-            </div>
-            
-            <div class="chat-container" id="chat-container">
-                <div class="message ai-message">
-                    <div class="avatar"><i class="fa-solid fa-robot"></i></div>
-                    <div class="message-content">
-                        <p>Chào bạn! Mình là AI Tutor. Mình có thể giúp bạn <strong>tóm tắt</strong> kiến thức hoặc <strong>tạo quiz</strong> trắc nghiệm để ôn tập bài học. Bạn cần mình hỗ trợ gì nào?</p>
-                    </div>
-                </div>
-            </div>
+        <div id="result-state" class="result-state hidden">
+          <div id="result-icon" class="result-icon">✓</div>
+          <p id="result-label" class="kicker">ĐÃ ĐÁNH GIÁ</p>
+          <h2 id="result-title">Bạn đã nắm đúng ý chính.</h2>
+          <p id="feedback-text"></p>
+          <div id="gap-list" class="gap-list hidden"></div>
+          <blockquote id="evidence-card" class="evidence-card hidden">
+            <span id="evidence-id"></span>
+            <p id="evidence-quote"></p>
+          </blockquote>
+          <div class="action-row">
+            <button id="try-again" class="button primary" type="button">Trả lời lại</button>
+            <button id="restart" class="button ghost" type="button">Kết thúc phiên</button>
+          </div>
+          <div class="feedback-row">
+            <span>Kết quả này hữu ích?</span>
+            <button class="feedback-button" data-feedback="true" type="button" aria-label="Hữu ích">👍</button>
+            <button class="feedback-button" data-feedback="false" type="button" aria-label="Không hữu ích">👎</button>
+            <span id="feedback-sent"></span>
+          </div>
+        </div>
 
-            <!-- Loader -->
-            <div class="loader-container hidden" id="typing-indicator">
-                <div class="typing">
-                    <span class="circle"></span>
-                    <span class="circle"></span>
-                    <span class="circle"></span>
-                </div>
-                <p>AI đang xử lý...</p>
-            </div>
-            
-            <!-- Chat Input Form -->
-            <div class="chat-input-area">
-                <textarea id="chat-input" placeholder="Ví dụ: Tóm tắt phần AI, hoặc Tạo quiz đoạn T06..." rows="1"></textarea>
-                <button class="btn btn-icon btn-send" id="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
-            </div>
-        </section>
-    </main>
+        <div id="loading-state" class="loading-state hidden">
+          <div class="loader"></div>
+          <h2 id="loading-title">Đang đọc bài học…</h2>
+          <p id="loading-copy">Coach đang tìm các đoạn nguồn phù hợp.</p>
+        </div>
 
-    <script src="app.js"></script>
+        <div id="error-state" class="error-state hidden" role="alert">
+          <span>!</span>
+          <h2>Chưa thể tiếp tục</h2>
+          <p id="error-message"></p>
+          <button id="retry" class="button primary" type="button">Thử lại</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/app.js" defer></script>
 </body>
 </html>

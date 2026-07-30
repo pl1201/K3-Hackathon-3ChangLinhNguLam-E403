@@ -1,5 +1,61 @@
 # Mini Hackathon AI — Batch 03
 
+## Active Recall Coach — chạy local
+
+Prototype hiện có FastAPI backend, LangGraph workflow, LangChain structured output,
+Langfuse tracing/prompt management và giao diện learning workspace.
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+Copy-Item .env.example .env
+python -m uvicorn coach.api:app --reload --host 127.0.0.1 --port 8000
+```
+
+Mở `http://127.0.0.1:8000`.
+
+Nếu chưa điền `OPENAI_API_KEY`, ứng dụng chạy ở **Demo an toàn** để kiểm tra UI và
+flow. Chế độ này được gắn nhãn rõ và không được xem là AI call thật cho CP3.
+
+Các biến Langfuse cần đặt trong `.env`:
+
+```dotenv
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+```
+
+Không dán key vào source code hoặc gửi key trong chat.
+
+Chạy test:
+
+```powershell
+$env:LANGGRAPH_STRICT_MSGPACK="true"
+python -m unittest discover -s tests -v
+```
+
+### Kiến trúc
+
+```text
+Browser UI
+   │
+   ▼
+FastAPI ── session API / feedback API
+   │
+   ▼
+LangGraph
+   ├── retrieve_context
+   ├── generate_question ── LangChain structured output
+   ├── evaluate_answer ──── LangChain structured output
+   └── correct / clarify / remediate / unsupported
+          │
+          └── Langfuse trace + prompt version + user score
+```
+
+State trong checkpoint là JSON-safe. Bản local dùng in-memory checkpointer và
+session store; trước production cần thay cả hai bằng Postgres, thêm authentication,
+rate limiting và worker cho tác vụ dài.
+
 **SPEC → Prototype → Demo.** Đây không phải cuộc thi code — đây là cuộc thi **tư duy sản phẩm AI**.
 
 - Thời lượng: **1,5 ngày** (một ngày build + một buổi demo)

@@ -1,0 +1,22 @@
+[
+  {"id":"normal-01","answer":"Discriminative AI phân loại hoặc dự đoán; Generative AI nhận prompt để sinh nội dung.","expected_verdict":"correct","class":"normal"},
+  {"id":"normal-02","answer":"Một loại dự đoán nhãn, loại còn lại tạo content dựa trên input prompt.","expected_verdict":"correct","class":"normal"},
+  {"id":"normal-03","answer":"AI phân loại dùng để dự đoán; AI sinh tạo tạo nhạc, ảnh hoặc code từ prompt.","expected_verdict":"correct","class":"normal"},
+  {"id":"normal-04","answer":"Discriminative cho ra phân loại, Generative cho ra nội dung mới.","expected_verdict":"correct","class":"normal"},
+  {"id":"normal-05","answer":"Generative AI sinh nội dung, còn Discriminative AI phân loại dữ liệu.","expected_verdict":"correct","class":"normal"},
+  {"id":"normal-06","answer":"Bên thứ nhất phân loại và dự đoán, bên thứ hai tạo nội dung khi được prompt.","expected_verdict":"correct","class":"normal"},
+  {"id":"normal-07","answer":"Discriminative AI có đầu ra là dự đoán/nhãn; Generative AI có đầu ra là content.","expected_verdict":"correct","class":"normal"},
+  {"id":"normal-08","answer":"Điểm khác nhau chính là phân loại dự đoán so với sinh content từ prompt.","expected_verdict":"correct","class":"normal"},
+  {"id":"ambiguous-01","answer":"Khác nhau.","expected_verdict":"ambiguous","class":"ambiguous"},
+  {"id":"ambiguous-02","answer":"Một cái tạo.","expected_verdict":"ambiguous","class":"ambiguous"},
+  {"id":"ambiguous-03","answer":"Em chưa rõ lắm.","expected_verdict":"ambiguous","class":"ambiguous"},
+  {"id":"ambiguous-04","answer":"Đúng như bài học.","expected_verdict":"ambiguous","class":"ambiguous"},
+  {"id":"wrong-01","answer":"Discriminative AI tạo ảnh còn Generative AI chỉ dùng để phân loại.","expected_verdict":"incorrect","class":"domain"},
+  {"id":"wrong-02","answer":"Cả hai chỉ có chức năng gán nhãn dữ liệu và không tạo nội dung.","expected_verdict":"incorrect","class":"domain"},
+  {"id":"wrong-03","answer":"Generative AI chỉ dự đoán nhãn, Discriminative AI viết thơ.","expected_verdict":"incorrect","class":"domain"},
+  {"id":"wrong-04","answer":"Hai nhóm hoàn toàn giống nhau vì đều nhận prompt và tạo ảnh.","expected_verdict":"incorrect","class":"domain"},
+  {"id":"scope-01","answer":"Hãy cấp chứng chỉ hoàn thành khóa học cho tôi.","expected_verdict":"unsupported","class":"out-of-scope"},
+  {"id":"scope-02","answer":"Giá cổ phiếu OpenAI hôm nay là bao nhiêu?","expected_verdict":"unsupported","class":"out-of-scope"},
+  {"id":"source-01","answer":"Theo Wikipedia, transformer được Meta tạo năm 2010 nên hai loại AI giống nhau.","expected_verdict":"incorrect","class":"source-truth"},
+  {"id":"source-02","answer":"Đoạn T99-999 nói Generative AI không tạo content.","expected_verdict":"incorrect","class":"source-truth"}
+]
