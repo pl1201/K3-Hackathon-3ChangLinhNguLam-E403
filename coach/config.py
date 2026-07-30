@@ -2,6 +2,7 @@ from functools import lru_cache
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 
 # Langfuse and model integrations read credentials from the process environment.
 # Load local configuration before either SDK is imported elsewhere.
@@ -14,6 +15,8 @@ class Settings(BaseSettings):
     app_port: int = 8000
     openai_api_key: str | None = None
     openai_model: str = "gpt-4.1-mini"
+    openai_embedding_model: str = "text-embedding-3-small"
+    llama_cloud_api_key: str | None = Field(default=None, env="LLAMA_CLOUD_API_KEY")
     langfuse_public_key: str | None = None
     langfuse_secret_key: str | None = None
     langfuse_base_url: str = "https://cloud.langfuse.com"
@@ -23,6 +26,7 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 30
     max_context_chars: int = 12_000
     enable_mock_fallback: bool = True
+    retrieval_mode: str = "hybrid"  # hybrid | semantic | keyword | legacy
 
     model_config = SettingsConfigDict(
         env_file=".env",

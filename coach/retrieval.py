@@ -76,3 +76,67 @@ def format_context(chunks: list[Chunk], max_chars: int) -> str:
 
 def valid_source_ids(chunks: list[Chunk]) -> set[str]:
     return {chunk.chunk_id for chunk in chunks}
+
+
+# ---------------------------------------------------------------------------
+# Advanced retrieval modes (LangChain BM25, FAISS, EnsembleRetriever)
+# ---------------------------------------------------------------------------
+
+def keyword_retrieve(lesson_id: str, query: str, limit: int = 6) -> list[Chunk]:
+    """Retrieve chunks using LangChain's BM25Retriever."""
+    from coach.indexing import _documents_to_chunks, get_bm25_retriever
+
+    retriever = get_bm25_retriever(lesson_id, k=limit)
+    docs = retriever.invoke(query)
+    return _documents_to_chunks(docs)
+
+
+def semantic_retrieve(lesson_id: str, query: str, limit: int = 6) -> list[Chunk]:
+    """Retrieve chunks using LangChain's FAISS vectorstore (requires OpenAI API key)."""
+    from coach.config import get_settings
+    from coach.indexing import _documents_to_chunks, get_vector_retriever
+
+    settings = get_settings()
+    if not settings.openai_api_key:
+        return keyword_retrieve(lesson_id, query, limit)
+
+    retriever = get_vector_retriever(lesson_id, k=limit)
+    docs = retriever.invoke(query)
+    return _documents_to_chunks(docs)
+
+
+def hybrid_retrieve(lesson_id: str, query: str, limit: int = 6) -> list[Chunk]:
+    """Retrieve chunks using LangChain's EnsembleRetriever (BM25 + FAISS with RRF).
+
+    Weights: BM25 30%, Vector 70% (configurable via get_ensemble_retriever).
+    Falls back to BM25 only if no OpenAI API key.
+    """
+    from coach.indexing import _documents_to_chunks, get_ensemble_retriever
+
+    retriever = get_ensemble_retriever(lesson_id, k=limit)
+    docs = retriever.invoke(query)
+    return _documents_to_chunks(docs[:limit])
+
+
+def smart_retrieve(lesson_id: str, query: str, limit: int = 6) -> list[Chunk]:
+    """Dispatch to the correct retrieval strategy based on config.
+
+    Reads ``retrieval_mode`` from settings:
+      - ``"hybrid"``   → EnsembleRetriever (BM25 + FAISS)  (default)
+      - ``"semantic"``  → FAISS only
+      - ``"keyword"``   → BM25 only
+      - ``"legacy"``    → original token-overlap method
+    """
+    from coach.config import get_settings
+
+    mode = get_settings().retrieval_mode
+
+    if mode == "hybrid":
+        return hybrid_retrieve(lesson_id, query, limit)
+    elif mode == "semantic":
+        return semantic_retrieve(lesson_id, query, limit)
+    elif mode == "keyword":
+        return keyword_retrieve(lesson_id, query, limit)
+    else:
+        return retrieve(lesson_id, query, limit)
+
