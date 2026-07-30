@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Active Recall Coach - VLearn</title>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Background Elements for Premium Look -->
     <div class="bg-shape bg-shape-1"></div>
     <div class="bg-shape bg-shape-2"></div>
 
@@ -61,33 +58,29 @@
             </div>
             
             <div class="chat-container" id="chat-container">
-                <!-- Welcome Message -->
                 <div class="message ai-message">
                     <div class="avatar"><i class="fa-solid fa-robot"></i></div>
                     <div class="message-content">
-                        <p>Chào bạn! Mình là AI Tutor. Trông bạn có vẻ vừa đọc xong tài liệu. Thay vì đọc lại từ đầu rất mất thời gian, bạn có muốn làm một bài Quiz nhỏ để kiểm tra xem mình đã hiểu đúng và đủ các ý trọng tâm chưa?</p>
-                        <button class="btn btn-primary mt-3" id="btn-generate-quiz">
-                            <i class="fa-solid fa-bolt"></i> Tạo bài ôn tập ngay
-                        </button>
+                        <p>Chào bạn! Mình là AI Tutor. Mình có thể giúp bạn <strong>tóm tắt</strong> kiến thức hoặc <strong>tạo quiz</strong> trắc nghiệm để ôn tập bài học. Bạn cần mình hỗ trợ gì nào?</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Loader (Hidden by default) -->
+            <!-- Loader -->
             <div class="loader-container hidden" id="typing-indicator">
                 <div class="typing">
                     <span class="circle"></span>
                     <span class="circle"></span>
                     <span class="circle"></span>
                 </div>
-                <p>AI đang phân tích tài liệu và tạo câu hỏi...</p>
+                <p>AI đang xử lý...</p>
             </div>
             
-            <!-- Quiz Form Template (Injected via JS) -->
-            <div id="quiz-container" class="hidden">
-                <!-- Quiz goes here -->
+            <!-- Chat Input Form -->
+            <div class="chat-input-area">
+                <textarea id="chat-input" placeholder="Ví dụ: Tóm tắt phần AI, hoặc Tạo quiz đoạn T06..." rows="1"></textarea>
+                <button class="btn btn-icon btn-send" id="btn-send"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
-            
         </section>
     </main>
 
