@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Recall Coach - VLearn</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Elements for Premium Look -->
+    <div class="bg-shape bg-shape-1"></div>
+    <div class="bg-shape bg-shape-2"></div>
+
+    <header class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>VLearn <span class="highlight">AI</span></span>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="active">Bài học</a>
+            <a href="#">Tiến độ</a>
+            <a href="#">Cài đặt</a>
+        </div>
+        <div class="user-profile">
+            <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Left Column: Document Viewer -->
+        <section class="document-section panel glass-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-file-lines"></i> Foundation: Transformer & Attention</h2>
+                <div class="actions">
+                    <button class="btn btn-icon"><i class="fa-solid fa-expand"></i></button>
+                </div>
+            </div>
+            <div class="panel-content document-content" id="document-content">
+                <h3>Khái niệm cơ bản về Transformer</h3>
+                <p><strong>[T06-044]</strong> Thế thì vì sao cái năm 25-26 này lại là năm bước ngoặt? Lúc nãy câu hỏi ban đầu của mình là các bạn đang thấy AI nó đang thuận trend đúng không? Bây giờ câu hỏi này mình nghĩ là sẽ không nhiều người giải thích được: theo các bạn, vì sao người ta lại ghi là AI đến năm 2030 có thể đóng góp vào GDP toàn cầu 15,7 nghìn tỷ đô?</p>
+                
+                <p><strong>[T06-051]</strong> Nhóm đầu tiên là cái gọi là discriminative AI — nói một tiếng là phân loại, dự đoán. Cái này thường được sử dụng nhiều ở giai đoạn chúng ta huấn luyện mô hình, chúng ta gán nhãn vân vân... Nhóm thứ hai là generative AI: bản chất chức năng chính của nó là chúng ta prompt — prompt cũng có thể hiểu là một input — nhưng nó trả về cho chúng ta cái content.</p>
+                
+                <p><strong>[T06-059]</strong> Khoảng năm 1970 cho đến năm 1990 được xem là vài thập kỷ gọi là mùa đông AI: các nhà khoa học cãi nhau câu chuyện là tôi sẽ phải dùng rất nhiều chuyên gia để viết cái vòng lặp hàng tỷ lần... Mãi đến năm 2017 thì có kiến trúc transformer, do các nhà khoa học của Google tạo ra.</p>
+
+                <p><em>(Nội dung bài học được trích xuất từ buổi học thực tế trên hệ thống VLearn...)</em></p>
+            </div>
+        </section>
+
+        <!-- Right Column: Active Recall Coach -->
+        <section class="coach-section panel glass-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-robot"></i> Active Recall Coach</h2>
+                <div class="status-indicator">
+                    <span class="dot online"></span> Sẵn sàng
+                </div>
+            </div>
+            
+            <div class="chat-container" id="chat-container">
+                <!-- Welcome Message -->
+                <div class="message ai-message">
+                    <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="message-content">
+                        <p>Chào bạn! Mình là AI Tutor. Trông bạn có vẻ vừa đọc xong tài liệu. Thay vì đọc lại từ đầu rất mất thời gian, bạn có muốn làm một bài Quiz nhỏ để kiểm tra xem mình đã hiểu đúng và đủ các ý trọng tâm chưa?</p>
+                        <button class="btn btn-primary mt-3" id="btn-generate-quiz">
+                            <i class="fa-solid fa-bolt"></i> Tạo bài ôn tập ngay
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loader (Hidden by default) -->
+            <div class="loader-container hidden" id="typing-indicator">
+                <div class="typing">
+                    <span class="circle"></span>
+                    <span class="circle"></span>
+                    <span class="circle"></span>
+                </div>
+                <p>AI đang phân tích tài liệu và tạo câu hỏi...</p>
+            </div>
+            
+            <!-- Quiz Form Template (Injected via JS) -->
+            <div id="quiz-container" class="hidden">
+                <!-- Quiz goes here -->
+            </div>
+            
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
