@@ -18,6 +18,8 @@ const state = {
   agentPhase: "idle",   // idle | thinking | summary | topic | quiz | done | error
   slideIndex: 0,
   slideTotalCount: 0,
+  activeSourceKey: "transcript-06-clean",
+  contentMode: "summary",
   selectedBloom: "analyze",
   selectedQuizCount: 20,
   selectedTopicQuery: null,
@@ -29,6 +31,7 @@ const state = {
 // ─── Helpers ─────────────────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
+const transcriptCache = new Map();
 
 function showToast(message, duration = 2200) {
   const toast = $("#toast");
@@ -378,8 +381,8 @@ async function submitEssayAnswer() {
   }
   const button = $("#essay-submit");
   button.disabled = true;
-  button.textContent = "Đang chấm…";
-  setAgentStatus("busy", "Đang chấm tự luận…");
+  button.textContent = "Đang đánh giá…";
+  setAgentStatus("busy", "Đang đánh giá…");
 
   try {
     const data = await request("/api/essay/answers", {
@@ -390,20 +393,28 @@ async function submitEssayAnswer() {
       }),
     });
     $("#essay-result").classList.remove("hidden");
-    $("#essay-score").textContent = `${data.evaluation.score}/10`;
+    const verdictLabels = {
+      mastered: "Đã nắm vững",
+      developing: "Đang hoàn thiện",
+      needs_review: "Cần ôn lại",
+    };
+    const outcome = $("#essay-outcome");
+    outcome.className = `essay-outcome ${data.evaluation.verdict}`;
+    $("#essay-verdict").textContent =
+      verdictLabels[data.evaluation.verdict] || "Đã đánh giá";
     $("#essay-feedback").textContent = data.evaluation.feedback;
     $("#essay-suggested-answer").textContent = data.suggested_answer;
     renderEssayRubric(data.evaluation.rubric_breakdown || []);
     renderTextList($("#essay-strengths"), data.evaluation.strengths, "Chưa có");
     renderTextList($("#essay-missing"), data.evaluation.missing_points, "Không có");
     renderEssaySource($("#essay-result-source"), data);
-    setAgentStatus("active", "Đã chấm xong");
+    setAgentStatus("active", "Đã đánh giá");
   } catch (err) {
-    showToast(`Chưa chấm được: ${err.message}`);
+    showToast(`Chưa đánh giá được: ${err.message}`);
     setAgentStatus("idle", "Lỗi");
   } finally {
     button.disabled = false;
-    button.textContent = "Chấm lại →";
+    button.textContent = "Đánh giá lại →";
   }
 }
 
@@ -427,11 +438,15 @@ function renderEssayRubric(items) {
     status.textContent = labels[item.status] || item.status;
     main.append(criterion, status);
 
-    const points = document.createElement("strong");
-    points.textContent = `${item.points}/${item.max_points}`;
     const reason = document.createElement("p");
     reason.textContent = item.reason;
-    row.append(main, points, reason);
+    row.append(main, reason);
+    if (item.evidence_quote) {
+      const evidence = document.createElement("blockquote");
+      evidence.className = "essay-rubric-evidence";
+      evidence.textContent = `“${item.evidence_quote}”`;
+      row.appendChild(evidence);
+    }
     container.appendChild(row);
   });
 }
@@ -470,7 +485,7 @@ function createSourceJumpButton({ lessonId, sourceFile, pageNumber, chunkId }) {
   return button;
 }
 
-function jumpToSource({ lessonId, sourceFile, pageNumber, chunkId }) {
+async function jumpToSource({ lessonId, sourceFile, pageNumber, chunkId }) {
   const pdfKey = sourceFile?.includes("d1-slide") ? "day1"
     : sourceFile?.includes("d2-slide") ? "day2"
       : (lessonId === "day1" || lessonId === "day2" ? lessonId : null);
@@ -482,9 +497,8 @@ function jumpToSource({ lessonId, sourceFile, pageNumber, chunkId }) {
     item.setAttribute("aria-pressed", String(isTarget));
   });
 
-  renderSlideDeck(targetKey);
-
   if (pdfKey && pageNumber) {
+    renderSlideDeck(targetKey);
     const deck = SLIDE_DECKS[pdfKey];
     const object = $("#slide-track object");
     if (object) {
@@ -494,6 +508,13 @@ function jumpToSource({ lessonId, sourceFile, pageNumber, chunkId }) {
     return;
   }
 
+  if (chunkId && targetKey.startsWith("transcript-")) {
+    await renderTranscriptDeck(targetKey, chunkId);
+    showToast(`Đã mở đoạn ${chunkId}.`);
+    return;
+  }
+
+  renderSlideDeck(targetKey);
   if (pageNumber && SLIDE_DECKS[targetKey]?.slides) {
     goToSlide(Math.max(0, pageNumber - 1));
   }
@@ -1385,7 +1406,12 @@ const SLIDE_DECKS = {
 // ─── Render Slide Deck Dynamically ─────────────────────────────
 function renderSlideDeck(key) {
   const deck = SLIDE_DECKS[key] || SLIDE_DECKS["transcript-06-clean"];
+  state.activeSourceKey = key;
+  state.contentMode = "summary";
   $("#slide-source-label").textContent = deck.label;
+  $("#slide-stage").classList.remove("transcript-mode");
+  $("#slide-counter").classList.remove("transcript-counter");
+  syncContentModeControls(key, "summary");
 
   const track = $("#slide-track");
   const dots = $("#slide-dots");
@@ -1507,8 +1533,143 @@ function renderSlideDeck(key) {
   });
 
   state.slideTotalCount = deck.slides.length;
-  $("#slide-total").textContent = state.slideTotalCount;
+  $("#slide-total").textContent = `${state.slideTotalCount} trang`;
   goToSlide(0);
+}
+
+function syncContentModeControls(key, mode) {
+  const isTranscript = key.startsWith("transcript-");
+  const switcher = $("#content-mode-switch");
+  switcher.classList.toggle("hidden", !isTranscript);
+
+  const summaryButton = $("#summary-view-btn");
+  const transcriptButton = $("#transcript-view-btn");
+  summaryButton.classList.toggle("active", mode === "summary");
+  transcriptButton.classList.toggle("active", mode === "transcript");
+  summaryButton.setAttribute("aria-selected", String(mode === "summary"));
+  transcriptButton.setAttribute("aria-selected", String(mode === "transcript"));
+}
+
+async function loadTranscript(lessonId) {
+  if (!transcriptCache.has(lessonId)) {
+    transcriptCache.set(
+      lessonId,
+      request(`/api/transcripts/${encodeURIComponent(lessonId)}`)
+    );
+  }
+  try {
+    return await transcriptCache.get(lessonId);
+  } catch (error) {
+    transcriptCache.delete(lessonId);
+    throw error;
+  }
+}
+
+async function renderTranscriptDeck(key, focusChunkId = null) {
+  if (!key.startsWith("transcript-")) return;
+
+  const deck = SLIDE_DECKS[key] || SLIDE_DECKS["transcript-06-clean"];
+  state.activeSourceKey = key;
+  state.contentMode = "transcript";
+  $("#slide-source-label").textContent = deck.label;
+  $("#slide-stage").classList.add("transcript-mode");
+  $("#slide-counter").classList.add("transcript-counter");
+  $("#slide-current").textContent = "…";
+  $("#slide-total").textContent = "đoạn";
+  $("#slide-prev").disabled = true;
+  $("#slide-next").disabled = true;
+  syncContentModeControls(key, "transcript");
+
+  const track = $("#slide-track");
+  const dots = $("#slide-dots");
+  track.style.transform = "none";
+  track.innerHTML = `<div class="transcript-view"><div class="transcript-loading">Đang tải transcript đầy đủ…</div></div>`;
+  dots.innerHTML = `<span class="transcript-footer-status">Đang đọc nguồn transcript</span>`;
+
+  try {
+    const data = await loadTranscript(key);
+    $("#slide-current").textContent = data.total_chunks;
+
+    const view = document.createElement("div");
+    view.className = "transcript-view";
+
+    const header = document.createElement("div");
+    header.className = "transcript-view-header";
+    const title = document.createElement("div");
+    title.className = "transcript-view-title";
+    const titleText = document.createElement("strong");
+    titleText.textContent = "Transcript đầy đủ";
+    const countText = document.createElement("span");
+    countText.textContent = `${data.total_chunks} đoạn nguồn · cuộn để đọc`;
+    title.append(titleText, countText);
+
+    const search = document.createElement("input");
+    search.type = "search";
+    search.className = "transcript-search";
+    search.placeholder = "Tìm nội dung hoặc mã đoạn…";
+    search.setAttribute("aria-label", "Tìm trong transcript");
+    header.append(title, search);
+
+    const list = document.createElement("div");
+    list.className = "transcript-list";
+    const chunkElements = [];
+    data.chunks.forEach((chunk) => {
+      const article = document.createElement("article");
+      article.className = "transcript-chunk";
+      article.id = `chunk-${chunk.chunk_id}`;
+      article.dataset.search = `${chunk.chunk_id} ${chunk.text}`.toLowerCase();
+
+      const chunkId = document.createElement("span");
+      chunkId.className = "transcript-chunk-id";
+      chunkId.textContent = chunk.chunk_id;
+      const text = document.createElement("p");
+      text.textContent = chunk.text;
+      article.append(chunkId, text);
+      list.appendChild(article);
+      chunkElements.push(article);
+    });
+
+    const empty = document.createElement("div");
+    empty.className = "transcript-empty hidden";
+    empty.textContent = "Không tìm thấy đoạn phù hợp.";
+
+    search.addEventListener("input", () => {
+      const query = search.value.trim().toLowerCase();
+      let visibleCount = 0;
+      chunkElements.forEach((element) => {
+        const isVisible = !query || element.dataset.search.includes(query);
+        element.classList.toggle("hidden", !isVisible);
+        if (isVisible) visibleCount += 1;
+      });
+      empty.classList.toggle("hidden", visibleCount > 0);
+      countText.textContent = query
+        ? `${visibleCount}/${data.total_chunks} đoạn phù hợp`
+        : `${data.total_chunks} đoạn nguồn · cuộn để đọc`;
+      $("#slide-current").textContent = visibleCount;
+    });
+
+    view.append(header, list, empty);
+    track.replaceChildren(view);
+    dots.innerHTML = `<span class="transcript-footer-status">Hiển thị đủ ${data.total_chunks} đoạn nguồn</span>`;
+
+    if (focusChunkId) {
+      requestAnimationFrame(() => {
+        const target = document.getElementById(`chunk-${focusChunkId}`);
+        if (!target) return;
+        target.classList.add("focused");
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  } catch (error) {
+    const view = document.createElement("div");
+    view.className = "transcript-view";
+    const errorMessage = document.createElement("div");
+    errorMessage.className = "transcript-error";
+    errorMessage.textContent = `Không tải được transcript: ${error.message}`;
+    view.appendChild(errorMessage);
+    track.replaceChildren(view);
+    $("#slide-current").textContent = "0";
+  }
 }
 
 // ─── Source Selection ─────────────────────────────────────────
@@ -1562,6 +1723,7 @@ function initSlides() {
 }
 
 function goToSlide(idx) {
+  if (state.contentMode !== "summary") return;
   const cards = $$(".slide-card");
   if (idx < 0 || idx >= cards.length) return;
   state.slideIndex = idx;
@@ -1579,6 +1741,12 @@ function goToSlide(idx) {
 
 $("#slide-prev").addEventListener("click", () => goToSlide(state.slideIndex - 1));
 $("#slide-next").addEventListener("click", () => goToSlide(state.slideIndex + 1));
+$("#summary-view-btn").addEventListener("click", () => {
+  renderSlideDeck(state.activeSourceKey);
+});
+$("#transcript-view-btn").addEventListener("click", () => {
+  renderTranscriptDeck(state.activeSourceKey);
+});
 
 $$(".dot").forEach((dot) => {
   dot.addEventListener("click", () => goToSlide(Number(dot.dataset.idx)));

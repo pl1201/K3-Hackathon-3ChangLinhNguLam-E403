@@ -16,6 +16,8 @@ from coach.schemas import (
     FeedbackRequest,
     SessionResponse,
     StartSessionRequest,
+    TranscriptChunkResponse,
+    TranscriptResponse,
 )
 from coach.schemas_quiz import (
     EssayAnswerRequest,
@@ -48,6 +50,29 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
+
+
+@app.get("/api/transcripts/{lesson_id}", response_model=TranscriptResponse)
+async def get_transcript(lesson_id: str) -> TranscriptResponse:
+    """Return every ordered chunk for one transcript lesson."""
+    from coach.retrieval import load_lesson
+
+    try:
+        chunks = await run_in_threadpool(lambda: load_lesson(lesson_id))
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Transcript not found") from exc
+
+    if not chunks:
+        raise HTTPException(status_code=404, detail="Transcript has no content")
+
+    return TranscriptResponse(
+        lesson_id=lesson_id,
+        total_chunks=len(chunks),
+        chunks=[
+            TranscriptChunkResponse(chunk_id=chunk.chunk_id, text=chunk.text)
+            for chunk in chunks
+        ],
+    )
 
 
 def _new_trace_id() -> str:

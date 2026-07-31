@@ -6,7 +6,11 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from coach.api import ESSAY_SESSIONS, QUIZ_SESSIONS, app
-from coach.schemas_quiz import EssayEvaluation, EssayQuestion
+from coach.schemas_quiz import (
+    EssayEvaluation,
+    EssayQuestion,
+    EssayReferenceEvidence,
+)
 
 
 def quiz_json() -> str:
@@ -164,6 +168,16 @@ class QuizApiTests(unittest.TestCase):
             question_text="Vì sao attention quan trọng với Transformer?",
             reference_answer="Attention giúp mỗi token tập trung vào các token liên quan trong ngữ cảnh.",
             rubric_points=["Nêu quan hệ giữa token", "Nêu vai trò của trọng số"],
+            rubric_evidence=[
+                EssayReferenceEvidence(
+                    criterion="Nêu quan hệ giữa token",
+                    answer_quote="các token liên quan",
+                ),
+                EssayReferenceEvidence(
+                    criterion="Nêu vai trò của trọng số",
+                    answer_quote="tập trung vào các token liên quan",
+                ),
+            ],
             source_file="d1-slide-hackathon.pdf",
             page_number=15,
         )
@@ -186,13 +200,22 @@ class QuizApiTests(unittest.TestCase):
             question_text="Vì sao attention quan trọng với Transformer?",
             reference_answer="Attention giúp token tập trung vào phần liên quan.",
             rubric_points=["Nêu quan hệ token", "Nêu trọng số"],
+            rubric_evidence=[
+                EssayReferenceEvidence(
+                    criterion="Nêu quan hệ token",
+                    answer_quote="Attention giúp token",
+                ),
+                EssayReferenceEvidence(
+                    criterion="Nêu trọng số",
+                    answer_quote="tập trung vào phần liên quan",
+                ),
+            ],
             source_file="d1-slide-hackathon.pdf",
             page_number=15,
         )
         ESSAY_SESSIONS["essay-session-123"] = {"question": question, "context": "context"}
         evaluation = EssayEvaluation(
-            score=7,
-            verdict="partial",
+            verdict="developing",
             feedback="Bạn nêu đúng vai trò chính nhưng cần nói rõ cách tính mức liên quan.",
             strengths=["Đúng vai trò attention"],
             missing_points=["Chưa nêu trọng số liên quan"],
@@ -207,7 +230,8 @@ class QuizApiTests(unittest.TestCase):
             )
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["evaluation"]["score"], 7)
+        self.assertNotIn("score", payload["evaluation"])
+        self.assertEqual(payload["evaluation"]["verdict"], "developing")
         self.assertEqual(payload["page_number"], 15)
         self.assertEqual(
             payload["suggested_answer"],

@@ -15,7 +15,7 @@ from coach.schemas_quiz import (
     EssayEvaluation,
     EssayLLMAssessment,
     EssayQuestion,
-    EssayRubricScore,
+    EssayRubricResult,
 )
 
 
@@ -36,6 +36,9 @@ def generate_essay_question(
                     "Câu hỏi nên trả lời trong 3-6 câu, có 2-4 ý rubric rõ ràng. "
                     "reference_answer phải là một đáp án mẫu ngắn gọn, dễ hiểu, "
                     "gồm 2-4 câu và không quá 450 ký tự. "
+                    "Đáp án mẫu phải trả lời ĐỦ mọi rubric. Với từng rubric, điền "
+                    "rubric_evidence cùng thứ tự và chép một answer_quote nguyên văn "
+                    "từ reference_answer làm bằng chứng. "
                     "Giữ chính xác source_file/page_number hoặc chunk_id từ metadata; không bịa nguồn."
                 ),
             },
@@ -65,14 +68,15 @@ def evaluate_essay_answer(
             {
                 "role": "system",
                 "content": (
-                    "Bạn chấm câu trả lời tự luận ngắn theo rubric và nguồn. "
+                    "Bạn đánh giá câu trả lời tự luận ngắn theo rubric và nguồn. "
                     "Với TỪNG tiêu chí rubric theo đúng thứ tự, chỉ đánh dấu: "
                     "`met` nếu đáp ứng đầy đủ, `partial` nếu đúng một phần, "
                     "`missing` nếu chưa đáp ứng. Với `met` hoặc `partial`, bắt buộc "
                     "chép một đoạn ngắn nguyên văn từ câu trả lời vào evidence_quote. "
                     "Không được suy diễn nội dung mà học viên không viết. Nếu học viên "
                     "chỉ lặp lại câu hỏi hoặc tiêu chí rubric thì đánh dấu `missing`. "
-                    "Không tự cho điểm tổng. Feedback tối đa 2 câu; không thưởng kiến thức ngoài nguồn."
+                    "Tuyệt đối không tạo điểm số. Feedback tối đa 2 câu; "
+                    "không ghi nhận kiến thức ngoài nguồn."
                 ),
             },
             {
@@ -88,7 +92,7 @@ def evaluate_essay_answer(
         response_model=EssayLLMAssessment,
         max_retries=3,
     )
-    return score_essay_assessment(question, assessment, answer_text)
+    return build_essay_evaluation(question, assessment, answer_text)
 
 
 def _normalize_text(value: str) -> str:
@@ -116,23 +120,21 @@ def _is_rubric_echo(answer_text: str, criteria: list[str]) -> bool:
     return False
 
 
-def score_essay_assessment(
+def build_essay_evaluation(
     question: EssayQuestion,
     assessment: EssayLLMAssessment,
     answer_text: str | None = None,
 ) -> EssayEvaluation:
-    """Calculate the final score deterministically from rubric statuses."""
+    """Build transparent qualitative feedback from rubric statuses."""
     criteria = question.rubric_points
-    count = len(criteria)
-    base_weight = round(10 / count, 2)
-    weights = [base_weight] * count
-    weights[-1] = round(10 - sum(weights[:-1]), 2)
-    multipliers = {"met": 1.0, "partial": 0.5, "missing": 0.0}
     normalized_answer = _normalize_text(answer_text or "")
     has_rubric_echo = bool(answer_text) and _is_rubric_echo(answer_text, criteria)
+    matches_reference = bool(answer_text) and (
+        normalized_answer == _normalize_text(question.reference_answer)
+    )
 
-    results: list[EssayRubricScore] = []
-    for index, (criterion, max_points) in enumerate(zip(criteria, weights)):
+    results: list[EssayRubricResult] = []
+    for index, criterion in enumerate(criteria):
         item = (
             assessment.criteria[index]
             if index < len(assessment.criteria)
@@ -144,36 +146,49 @@ def score_essay_assessment(
         )
         status = item.status
         reason = item.reason
-        if has_rubric_echo:
+        evidence_quote = item.evidence_quote
+        if matches_reference:
+            status = "met"
+            reason = "Nội dung khớp đáp án tham khảo và thể hiện đầy đủ tiêu chí."
+            evidence_quote = question.rubric_evidence[index].answer_quote
+        elif has_rubric_echo:
             status = "missing"
             reason = "Câu trả lời chỉ lặp lại yêu cầu chấm, chưa cung cấp nội dung trả lời."
+            evidence_quote = None
         elif answer_text and status in ("met", "partial"):
-            evidence = _normalize_text(item.evidence_quote or "")
+            evidence = _normalize_text(evidence_quote or "")
             if not evidence or evidence not in normalized_answer:
                 status = "missing"
                 reason = "Không tìm thấy bằng chứng nguyên văn cho tiêu chí này trong câu trả lời."
+                evidence_quote = None
 
-        points = round(max_points * multipliers[status], 2)
         results.append(
-            EssayRubricScore(
+            EssayRubricResult(
                 criterion=criterion,
                 status=status,
-                points=points,
-                max_points=max_points,
                 reason=reason,
+                evidence_quote=evidence_quote if status in ("met", "partial") else None,
             )
         )
 
-    score = round(sum(item.points for item in results), 2)
-    verdict = "strong" if score >= 8 else "partial" if score >= 5 else "needs_review"
+    statuses = [item.status for item in results]
+    verdict = (
+        "mastered"
+        if statuses and all(status == "met" for status in statuses)
+        else "developing"
+        if any(status in ("met", "partial") for status in statuses)
+        else "needs_review"
+    )
     strengths = [item.criterion for item in results if item.status == "met"][:3]
     missing_points = [
         item.criterion for item in results if item.status in ("partial", "missing")
     ][:3]
     return EssayEvaluation(
-        score=score,
         verdict=verdict,
         feedback=(
+            "Bạn đã thể hiện đầy đủ các ý chính trong đáp án tham khảo."
+            if matches_reference
+            else
             "Bạn đang lặp lại yêu cầu của đề bài, chưa đưa ra câu trả lời có nội dung."
             if has_rubric_echo
             else assessment.feedback
