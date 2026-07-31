@@ -28,6 +28,21 @@ class CoachApiTests(unittest.TestCase):
         self.assertEqual(res2.status_code, 200)
         self.assertEqual(res2.headers["content-type"], "application/pdf")
 
+    def test_full_transcript_endpoint_returns_all_lesson_chunks(self) -> None:
+        response = self.client.get("/api/transcripts/transcript-04-clean")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["lesson_id"], "transcript-04-clean")
+        self.assertEqual(payload["total_chunks"], 98)
+        self.assertEqual(len(payload["chunks"]), 98)
+        self.assertEqual(payload["chunks"][0]["chunk_id"], "T04-001")
+
+    def test_unknown_transcript_returns_not_found(self) -> None:
+        response = self.client.get("/api/transcripts/transcript-99-clean")
+
+        self.assertEqual(response.status_code, 404)
+
     def test_correct_answer_completes_session(self) -> None:
         started = self.client.post(
             "/api/sessions",

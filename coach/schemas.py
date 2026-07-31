@@ -54,3 +54,14 @@ class SessionResponse(BaseModel):
     progress: int = Field(ge=0, le=100)
     trace_id: str | None = None
     mode: Literal["live", "mock"]
+
+
+class TranscriptChunkResponse(BaseModel):
+    chunk_id: str = Field(pattern=r"^T\d{2}-\d{3}$")
+    text: str = Field(min_length=1)
+
+
+class TranscriptResponse(BaseModel):
+    lesson_id: str
+    total_chunks: int = Field(ge=1)
+    chunks: list[TranscriptChunkResponse] = Field(min_length=1)

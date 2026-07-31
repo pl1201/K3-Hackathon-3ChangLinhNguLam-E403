@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=essay-answer-8">
+  <link rel="stylesheet" href="/style.css?v=transcript-viewer-11">
 </head>
 <body>
   <a class="skip-link" href="#workspace">Đi đến nội dung chính</a>
@@ -48,32 +48,32 @@
           <h2>Bài giảng</h2>
           <div class="source-item active" data-search="transcript 06 transformer attention" data-id="transcript-06-clean" tabindex="0" role="button" aria-pressed="true">
             <span class="source-type transcript">T</span>
-            <span><b>Transformer &amp; Attention</b><small>Transcript 06 · 162 đoạn</small></span>
+            <span><b>Transformer &amp; Attention</b><small>Transcript 06 · 162 đoạn nguồn</small></span>
             <i class="src-active-dot"></i>
           </div>
           <div class="source-item" data-search="transcript 04 llm foundation" data-id="transcript-04-clean" tabindex="0" role="button" aria-pressed="false">
             <span class="source-type transcript">T</span>
-            <span><b>LLM hoạt động thế nào</b><small>Transcript 04 · 98 đoạn</small></span>
+            <span><b>LLM hoạt động thế nào</b><small>Transcript 04 · 98 đoạn nguồn</small></span>
             <i class="src-active-dot"></i>
           </div>
           <div class="source-item" data-search="transcript 01 bài toán kinh doanh" data-id="transcript-01-clean" tabindex="0" role="button" aria-pressed="false">
             <span class="source-type transcript">T</span>
-            <span><b>Bài toán kinh doanh AI</b><small>Transcript 01 · 89 đoạn</small></span>
+            <span><b>Bài toán kinh doanh AI</b><small>Transcript 01 · 89 đoạn nguồn</small></span>
             <i class="src-active-dot"></i>
           </div>
           <div class="source-item" data-search="transcript 02 chỉ số thành công" data-id="transcript-02-clean" tabindex="0" role="button" aria-pressed="false">
             <span class="source-type transcript">T</span>
-            <span><b>Chỉ số thành công</b><small>Transcript 02 · 43 đoạn</small></span>
+            <span><b>Chỉ số thành công</b><small>Transcript 02 · 43 đoạn nguồn</small></span>
             <i class="src-active-dot"></i>
           </div>
           <div class="source-item" data-search="transcript 03 tự động hóa ràng buộc" data-id="transcript-03-clean" tabindex="0" role="button" aria-pressed="false">
             <span class="source-type transcript">T</span>
-            <span><b>Tự động hóa &amp; ràng buộc</b><small>Transcript 03 · 154 đoạn</small></span>
+            <span><b>Tự động hóa &amp; ràng buộc</b><small>Transcript 03 · 154 đoạn nguồn</small></span>
             <i class="src-active-dot"></i>
           </div>
           <div class="source-item" data-search="transcript 05 đánh giá dữ liệu" data-id="transcript-05-clean" tabindex="0" role="button" aria-pressed="false">
             <span class="source-type transcript">T</span>
-            <span><b>Đánh giá &amp; dữ liệu</b><small>Transcript 05 · 154 đoạn</small></span>
+            <span><b>Đánh giá &amp; dữ liệu</b><small>Transcript 05 · 154 đoạn nguồn</small></span>
             <i class="src-active-dot"></i>
           </div>
         </section>
@@ -101,7 +101,19 @@
       <div class="slide-toolbar">
         <div class="slide-info">
           <span class="slide-source-label" id="slide-source-label">Transformer &amp; Attention</span>
-          <span class="slide-counter"><span id="slide-current">1</span> / <span id="slide-total">6</span></span>
+          <span class="slide-counter" id="slide-counter">
+            <span id="slide-current">1</span>
+            <span id="slide-counter-separator">/</span>
+            <span id="slide-total">6 trang</span>
+          </span>
+          <div class="content-mode-switch" id="content-mode-switch" role="tablist" aria-label="Chế độ xem bài giảng">
+            <button class="content-mode-btn active" id="summary-view-btn" type="button" role="tab" aria-selected="true">
+              Tổng hợp
+            </button>
+            <button class="content-mode-btn" id="transcript-view-btn" type="button" role="tab" aria-selected="false">
+              Transcript
+            </button>
+          </div>
         </div>
         <div class="slide-nav-controls">
           <button id="slide-prev" class="slide-nav-btn" type="button" aria-label="Slide trước" disabled>‹</button>
@@ -393,14 +405,17 @@
             placeholder="Trình bày ngắn gọn trong 3–6 câu…"></textarea>
           <button class="agent-submit-btn" id="essay-submit" type="button">Nộp bài tự luận →</button>
           <div class="essay-result hidden" id="essay-result">
-            <div class="essay-score" id="essay-score"></div>
+            <div class="essay-outcome" id="essay-outcome">
+              <span aria-hidden="true">✦</span>
+              <strong id="essay-verdict"></strong>
+            </div>
             <p id="essay-feedback"></p>
             <div class="essay-model-answer">
               <strong>Đáp án tham khảo ngắn</strong>
               <p id="essay-suggested-answer"></p>
             </div>
             <div class="essay-rubric">
-              <strong>Cách tính điểm</strong>
+              <strong>Đánh giá theo từng ý</strong>
               <div id="essay-rubric-breakdown"></div>
             </div>
             <div class="essay-result-grid">
@@ -451,6 +466,6 @@
   <input id="lesson-id" type="hidden" value="transcript-06-clean">
 
   <div id="toast" class="toast" role="status"></div>
-  <script src="/app.js?v=essay-answer-8" defer></script>
+  <script src="/app.js?v=transcript-viewer-11" defer></script>
 </body>
 </html>

@@ -162,10 +162,20 @@ class QuizSessionResponse(BaseModel):
 # Short Essay Schemas
 # ---------------------------------------------------------------------------
 
+class EssayReferenceEvidence(BaseModel):
+    criterion: str = Field(min_length=3, max_length=180)
+    answer_quote: str = Field(
+        min_length=3,
+        max_length=300,
+        description="Trích dẫn nguyên văn từ reference_answer chứng minh tiêu chí đã được trả lời.",
+    )
+
+
 class EssayQuestion(BaseModel):
     question_text: str = Field(min_length=10, max_length=500)
-    reference_answer: str = Field(min_length=20, max_length=1200)
+    reference_answer: str = Field(min_length=20, max_length=500)
     rubric_points: list[str] = Field(min_length=2, max_length=5)
+    rubric_evidence: list[EssayReferenceEvidence] = Field(min_length=2, max_length=5)
     source_file: str | None = None
     page_number: int | None = Field(default=None, ge=1)
     chunk_id: str | None = Field(default=None, pattern=r"^T\d{2}-\d{3}$")
@@ -174,6 +184,16 @@ class EssayQuestion(BaseModel):
     def transcript_question_does_not_invent_page(self) -> Self:
         if self.chunk_id and not self.source_file:
             self.page_number = None
+        if len(self.rubric_evidence) != len(self.rubric_points):
+            raise ValueError("mỗi tiêu chí rubric phải có đúng một bằng chứng trong đáp án mẫu")
+
+        normalized_answer = " ".join(self.reference_answer.lower().split())
+        for index, criterion in enumerate(self.rubric_points):
+            evidence = self.rubric_evidence[index]
+            if evidence.criterion.strip().lower() != criterion.strip().lower():
+                raise ValueError("rubric_evidence phải giữ đúng thứ tự và nội dung rubric_points")
+            if " ".join(evidence.answer_quote.lower().split()) not in normalized_answer:
+                raise ValueError("answer_quote phải là trích dẫn nguyên văn từ reference_answer")
         return self
 
 
@@ -204,21 +224,19 @@ class EssayLLMAssessment(BaseModel):
     feedback: str = Field(max_length=320)
 
 
-class EssayRubricScore(BaseModel):
+class EssayRubricResult(BaseModel):
     criterion: str
     status: Literal["met", "partial", "missing"]
-    points: float = Field(ge=0)
-    max_points: float = Field(gt=0)
     reason: str
+    evidence_quote: str | None = None
 
 
 class EssayEvaluation(BaseModel):
-    score: float = Field(ge=0, le=10)
-    verdict: Literal["strong", "partial", "needs_review"]
+    verdict: Literal["mastered", "developing", "needs_review"]
     feedback: str = Field(max_length=320)
     strengths: list[str] = Field(default_factory=list, max_length=3)
     missing_points: list[str] = Field(default_factory=list, max_length=3)
-    rubric_breakdown: list[EssayRubricScore] = Field(default_factory=list, max_length=5)
+    rubric_breakdown: list[EssayRubricResult] = Field(default_factory=list, max_length=5)
 
 
 class PublicEssayQuestion(BaseModel):
