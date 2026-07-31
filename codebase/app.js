@@ -306,6 +306,7 @@ function renderStructuredSummaryInto(container, summary, lessonId) {
           sourceFile: fact.source_file,
           pageNumber: fact.page_number,
           chunkId: fact.chunk_id,
+          highlightText: fact.evidence_quote || fact.fact,
         });
         card.appendChild(sourceButton);
       }
@@ -469,10 +470,17 @@ function renderEssaySource(container, source) {
     sourceFile: source.source_file,
     pageNumber: source.page_number,
     chunkId: source.chunk_id,
+    highlightText: source.suggested_answer || source.question_text || "",
   }));
 }
 
-function createSourceJumpButton({ lessonId, sourceFile, pageNumber, chunkId }) {
+function createSourceJumpButton({
+  lessonId,
+  sourceFile,
+  pageNumber,
+  chunkId,
+  highlightText = "",
+}) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "source-jump-btn";
@@ -480,12 +488,18 @@ function createSourceJumpButton({ lessonId, sourceFile, pageNumber, chunkId }) {
     ? `↗ Mở Slide trang ${pageNumber}`
     : `↗ Mở đoạn ${chunkId}`;
   button.addEventListener("click", () => {
-    jumpToSource({ lessonId, sourceFile, pageNumber, chunkId });
+    jumpToSource({ lessonId, sourceFile, pageNumber, chunkId, highlightText });
   });
   return button;
 }
 
-async function jumpToSource({ lessonId, sourceFile, pageNumber, chunkId }) {
+async function jumpToSource({
+  lessonId,
+  sourceFile,
+  pageNumber,
+  chunkId,
+  highlightText = "",
+}) {
   const pdfKey = sourceFile?.includes("d1-slide") ? "day1"
     : sourceFile?.includes("d2-slide") ? "day2"
       : (lessonId === "day1" || lessonId === "day2" ? lessonId : null);
@@ -509,7 +523,7 @@ async function jumpToSource({ lessonId, sourceFile, pageNumber, chunkId }) {
   }
 
   if (chunkId && targetKey.startsWith("transcript-")) {
-    await renderTranscriptDeck(targetKey, chunkId);
+    await renderTranscriptDeck(targetKey, chunkId, highlightText);
     showToast(`Đã mở đoạn ${chunkId}.`);
     return;
   }
@@ -1565,7 +1579,109 @@ async function loadTranscript(lessonId) {
   }
 }
 
-async function renderTranscriptDeck(key, focusChunkId = null) {
+const TRANSCRIPT_MATCH_STOP_WORDS = new Set([
+  "ai", "anh", "ay", "ban", "bang", "bi", "cac", "cai", "can", "cho", "co",
+  "cua", "da", "dang", "day", "de", "den", "do", "duoc", "gi", "giup", "hay",
+  "hon", "khi", "khong", "la", "lai", "lam", "mot", "moi", "nay", "neu",
+  "nhieu", "nhung", "o", "ra", "rang", "roi", "se", "su", "ta", "tai", "the",
+  "thi", "theo", "trong", "tu", "va", "van", "ve", "vi", "voi",
+]);
+
+function normalizeTranscriptToken(value) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "d")
+    .toLowerCase();
+}
+
+function transcriptTokens(text) {
+  return Array.from(text.matchAll(/[\p{L}\p{N}]+/gu), (match) => ({
+    value: normalizeTranscriptToken(match[0]),
+    start: match.index,
+    end: match.index + match[0].length,
+  }));
+}
+
+function findTranscriptHighlightRange(sourceText, referenceText) {
+  if (!sourceText || !referenceText) return null;
+
+  const sourceTokens = transcriptTokens(sourceText);
+  const allReferenceTokens = transcriptTokens(referenceText).map((token) => token.value);
+
+  // An evidence_quote is copied verbatim from the source. Match its normalized
+  // token sequence first so the highlight stays as narrow and exact as possible.
+  if (allReferenceTokens.length) {
+    const maxStart = sourceTokens.length - allReferenceTokens.length;
+    for (let startIndex = 0; startIndex <= maxStart; startIndex += 1) {
+      const isExactSequence = allReferenceTokens.every(
+        (token, offset) => sourceTokens[startIndex + offset].value === token,
+      );
+      if (isExactSequence) {
+        return {
+          start: sourceTokens[startIndex].start,
+          end: sourceTokens[startIndex + allReferenceTokens.length - 1].end,
+        };
+      }
+    }
+  }
+
+  const referenceTokens = allReferenceTokens
+    .filter((token) => token.length > 1 && !TRANSCRIPT_MATCH_STOP_WORDS.has(token));
+  const queryTokens = [...new Set(referenceTokens)];
+  if (!sourceTokens.length || !queryTokens.length) return null;
+
+  const querySet = new Set(queryTokens);
+  const windowSize = Math.min(
+    sourceTokens.length,
+    Math.max(20, Math.min(48, queryTokens.length * 4)),
+  );
+  let best = null;
+
+  sourceTokens.forEach((token, index) => {
+    if (!querySet.has(token.value)) return;
+    const startIndex = Math.max(0, index - Math.floor(windowSize / 2));
+    const endIndex = Math.min(sourceTokens.length, startIndex + windowSize);
+    const matched = new Set();
+    for (let cursor = startIndex; cursor < endIndex; cursor += 1) {
+      if (querySet.has(sourceTokens[cursor].value)) {
+        matched.add(sourceTokens[cursor].value);
+      }
+    }
+    const coverage = matched.size / querySet.size;
+    const score = matched.size + coverage * 2;
+    if (!best || score > best.score) {
+      best = { startIndex, endIndex, matched: matched.size, coverage, score };
+    }
+  });
+
+  const minimumMatches = queryTokens.length <= 3 ? 1 : 2;
+  if (!best || best.matched < minimumMatches || best.coverage < 0.16) return null;
+
+  const first = sourceTokens[best.startIndex];
+  const last = sourceTokens[best.endIndex - 1];
+  return { start: first.start, end: last.end };
+}
+
+function renderTranscriptHighlight(element, sourceText, referenceText) {
+  const range = findTranscriptHighlightRange(sourceText, referenceText);
+  element.textContent = "";
+  if (!range) {
+    element.textContent = sourceText;
+    return false;
+  }
+
+  const before = document.createTextNode(sourceText.slice(0, range.start));
+  const mark = document.createElement("mark");
+  mark.className = "transcript-evidence-highlight";
+  mark.textContent = sourceText.slice(range.start, range.end);
+  const after = document.createTextNode(sourceText.slice(range.end));
+  element.append(before, mark, after);
+  return true;
+}
+
+async function renderTranscriptDeck(key, focusChunkId = null, highlightText = "") {
   if (!key.startsWith("transcript-")) return;
 
   const deck = SLIDE_DECKS[key] || SLIDE_DECKS["transcript-06-clean"];
@@ -1623,7 +1739,11 @@ async function renderTranscriptDeck(key, focusChunkId = null) {
       chunkId.className = "transcript-chunk-id";
       chunkId.textContent = chunk.chunk_id;
       const text = document.createElement("p");
-      text.textContent = chunk.text;
+      if (focusChunkId === chunk.chunk_id && highlightText) {
+        renderTranscriptHighlight(text, chunk.text, highlightText);
+      } else {
+        text.textContent = chunk.text;
+      }
       article.append(chunkId, text);
       list.appendChild(article);
       chunkElements.push(article);
@@ -1657,7 +1777,8 @@ async function renderTranscriptDeck(key, focusChunkId = null) {
         const target = document.getElementById(`chunk-${focusChunkId}`);
         if (!target) return;
         target.classList.add("focused");
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        const highlighted = target.querySelector(".transcript-evidence-highlight");
+        (highlighted || target).scrollIntoView({ behavior: "smooth", block: "center" });
       });
     }
   } catch (error) {

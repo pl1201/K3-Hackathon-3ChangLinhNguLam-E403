@@ -27,6 +27,8 @@ Quy tắc bắt buộc:
 5. CITATION CHÍNH XÁC:
    - Với PDF: lấy `source_file` và `page_number` từ thẻ [Source: ... | Page: ...].
    - Với transcript: lấy `chunk_id` từ thẻ [Txx-xxx].
+   - Với MỖI micro-fact, `evidence_quote` phải chép nguyên văn 8-40 từ từ đúng
+     page/chunk đã trích dẫn và phải trực tiếp chứng minh cho fact.
    - Tuyệt đối không tự tạo số trang, chunk ID hay kiến thức ngoài nguồn.
 6. `summary_notes`: Chỉ ghi 1 câu kết nối logic giữa CÁC CHỦ ĐỀ — không tóm tắt lại nội dung đã liệt kê.
 """
@@ -35,6 +37,8 @@ Quy tắc bắt buộc:
 _INLINE_SYSTEM_PROMPT = """Bạn là trợ giảng trả lời câu hỏi cụ thể của học viên dựa trên nguồn.
 Chỉ tóm tắt phần liên quan trực tiếp đến yêu cầu — không cần liệt kê toàn bộ bài.
 Mỗi topic chứa 1-3 micro-facts ngắn gọn, có citation chính xác từ nguồn.
+Mỗi micro-fact phải có `evidence_quote` chép nguyên văn 8-40 từ từ đúng page/chunk,
+không được diễn giải lại trích dẫn này.
 `summary_notes` để trống chuỗi rỗng vì đây là trả lời inline, không phải tổng quan toàn bài.
 """
 

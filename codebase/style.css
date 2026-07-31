@@ -641,6 +641,29 @@ body.sources-collapsed .sources-pane {
   line-height: 1.7;
 }
 
+.transcript-evidence-highlight {
+  padding: 2px 3px;
+  color: var(--ink);
+  background: #d9efff;
+  border-bottom: 2px solid var(--brand);
+  border-radius: 4px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  font-weight: 750;
+  animation: transcript-highlight-in .7s var(--ease) both;
+}
+
+@keyframes transcript-highlight-in {
+  from {
+    background: #fff1a8;
+    box-shadow: 0 0 0 5px rgba(255,209,67,.18);
+  }
+  to {
+    background: #d9efff;
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
 .transcript-empty,
 .transcript-loading,
 .transcript-error {

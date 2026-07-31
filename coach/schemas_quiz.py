@@ -29,6 +29,14 @@ class MicroFact(BaseModel):
         default=None,
         description="Tên file nguồn để mở lại đúng tài liệu.",
     )
+    evidence_quote: Optional[str] = Field(
+        default=None,
+        max_length=320,
+        description=(
+            "Trích dẫn ngắn, nguyên văn từ đúng page/chunk, trực tiếp chứng minh cho fact. "
+            "Không diễn giải lại nội dung nguồn."
+        ),
+    )
 
     @model_validator(mode="after")
     def transcript_fact_does_not_invent_page(self) -> Self:
