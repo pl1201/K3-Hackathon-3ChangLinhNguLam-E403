@@ -82,7 +82,7 @@ Xem chi tiết báo cáo và nguyên nhân fail tại thư mục `eval/results/r
 - **Thành viên 2**: Kỹ thuật Prompt (LLM-as-a-judge, Sinh Quiz).
 - **Thành viên 3**: Lập trình Backend (FastAPI, LangGraph).
 - **Thành viên 4**: Code Frontend UI (Streaming SSE).
-- **Willing users (CP5 Validation)**: Nam, Hùng, Linh (Kiểm chứng UX xem luồng làm quiz có bị kẹt không, log feedback vào thư mục `validation/`).
+- **Willing users (CP5 Validation)**: [Blank 1], [Blank 2], [Blank 3] (Kiểm chứng UX xem luồng làm quiz có bị kẹt không, log feedback vào thư mục `validation/`).
 
 ## §9. Changelog
 
