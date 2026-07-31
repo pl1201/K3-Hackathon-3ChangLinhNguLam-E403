@@ -79,7 +79,7 @@ Xem chi tiết báo cáo và nguyên nhân fail tại thư mục `eval/results/r
 ## §8. Phân công & kế hoạch
 
 - **Thành viên 1 (Nguyễn Ngọc Sơn)**: Tối ưu hệ thống Backend (Streaming SSE, Model Routing), xây dựng bộ kiểm thử tự động (LLM-as-a-judge, Golden Set), viết tài liệu Spec và Changelog.
-- **Thành viên 2 ([Tên Thành viên 2])**: Lập trình giao diện Frontend (UI/UX), thiết kế và tích hợp các chức năng hiển thị lên web.
+- **Thành viên 2 (Phùng Văn Linh)**: Product/UI Engineer, thiết kế luồng trải nghiệm học tập (Workspace, Tóm tắt/Quiz/Tự luận), phát triển giao diện Frontend và tối ưu UX (chọn Topic, cấp độ Bloom).
 - **Thành viên 3 (Lưu Quang Nhật)**: Lập trình Backend (FastAPI, LangGraph), xây dựng Core Engine cho Quiz Trắc nghiệm (MCQ) và Tóm tắt bài giảng (đọc PDF).
 - **Willing users (CP5 Validation)**: Trần Doãn Hưng, Ngô Khánh Trượng, Cao Huy Phúc (Kiểm chứng UX xem luồng làm quiz có bị kẹt không, log feedback vào thư mục `validation/`).
 
